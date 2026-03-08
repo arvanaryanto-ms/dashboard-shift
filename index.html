@@ -130,7 +130,7 @@
     <div class="ai-header">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="ai-title">🤖 AI SUMMARY ANALISA</div>
-        <span class="ai-badge">✅ GRATIS · Gemini</span>
+        <span class="ai-badge">✅ GRATIS · Gemini 1.5 Flash</span>
       </div>
       <button class="ai-btn" id="ai-btn" onclick="generateSummary()">✨ GENERATE AI SUMMARY</button>
     </div>
@@ -213,29 +213,20 @@ function renderDashboard() {
   const worst = sorted[sorted.length-1];
   const avg = (csvData.reduce((s,d) => s+d.pct, 0) / csvData.length).toFixed(2);
   const months = csvData.map(d => d.month).sort();
-  document.getElementById('header-sub').textContent = `${csvData.length} Bulan Berjalan · ${months[0]} — ${months[months.length-1]}`;
+  document.getElementById('header-sub').textContent = csvData.length + ' Bulan Berjalan · ' + months[0] + ' — ' + months[months.length-1];
   document.getElementById('avg-pct').textContent = avg + '%';
-  document.getElementById('avg-sub').textContent = `Rata-rata ${csvData.length} bulan`;
+  document.getElementById('avg-sub').textContent = 'Rata-rata ' + csvData.length + ' bulan';
   document.getElementById('best-month').textContent = best.month;
   document.getElementById('best-sub').textContent = best.pct + '% kepatuhan';
   document.getElementById('worst-month').textContent = worst.month;
   document.getElementById('worst-sub').textContent = worst.pct + '% kepatuhan';
-  document.getElementById('table-label').textContent = `DATA ${csvData.length} BULAN · URUT PCT TERTINGGI`;
+  document.getElementById('table-label').textContent = 'DATA ' + csvData.length + ' BULAN · URUT PCT TERTINGGI';
   const tbody = document.getElementById('table-body');
   tbody.innerHTML = '';
-  sorted.forEach(row => {
+  sorted.forEach(function(row) {
     const bc = row.pct >= 75 ? 'badge-baik' : row.pct >= 50 ? 'badge-cukup' : 'badge-buruk';
     const mc = row.mom && row.mom.startsWith('+') ? '#22c55e' : row.mom === '-' ? '#64748b' : '#f87171';
-    tbody.innerHTML += `<tr>
-      <td class="td-month">${row.month}</td>
-      <td class="td-sesuai">${row.sesuai.toLocaleString()}</td>
-      <td class="td-tidak">${row.tidak.toLocaleString()}</td>
-      <td class="td-total">${row.total.toLocaleString()}</td>
-      <td><span class="badge ${bc}">${row.pct}%</span></td>
-      <td style="font-size:16px">${row.trend}</td>
-      <td style="color:${mc}">${row.mom}</td>
-      <td>${row.status}</td>
-    </tr>`;
+    tbody.innerHTML += '<tr><td class="td-month">' + row.month + '</td><td class="td-sesuai">' + row.sesuai.toLocaleString() + '</td><td class="td-tidak">' + row.tidak.toLocaleString() + '</td><td class="td-total">' + row.total.toLocaleString() + '</td><td><span class="badge ' + bc + '">' + row.pct + '%</span></td><td style="font-size:16px">' + row.trend + '</td><td style="color:' + mc + '">' + row.mom + '</td><td>' + row.status + '</td></tr>';
   });
   document.getElementById('dashboard').classList.remove('hidden');
   document.getElementById('ai-result').classList.add('hidden');
@@ -252,26 +243,24 @@ async function generateSummary() {
   document.getElementById('ai-result').classList.add('hidden');
   document.getElementById('ai-loading').classList.remove('hidden');
 
-  const dataText = csvData.map(d =>
-    `${d.month}: Sesuai=${d.sesuai}, TidakSesuai=${d.tidak}, Total=${d.total}, Pct=${d.pct}%, Trend=${d.trend}, MoM=${d.mom}, Status=${d.status}`
-  ).join('\n');
+  const dataText = csvData.map(function(d) {
+    return d.month + ': Sesuai=' + d.sesuai + ', TidakSesuai=' + d.tidak + ', Total=' + d.total + ', Pct=' + d.pct + '%, Trend=' + d.trend + ', MoM=' + d.mom + ', Status=' + d.status;
+  }).join('\n');
 
-  const prompt = `Kamu adalah analis operasional logistik. Berikut data Performance Planning & Realisasi Shift:\n\n${dataText}\n\nBuatkan summary analisa dalam 1 paragraf singkat (3-5 kalimat) dalam Bahasa Indonesia yang mencakup:\n1. Tren umum kepatuhan planning shift\n2. Bulan terbaik dan terburuk\n3. Rekomendasi singkat untuk perbaikan\n\nGunakan bahasa profesional dan langsung to the point.`;
+  const prompt = 'Kamu adalah analis operasional logistik. Berikut data Performance Planning & Realisasi Shift:\n\n' + dataText + '\n\nBuatkan summary analisa dalam 1 paragraf singkat (3-5 kalimat) dalam Bahasa Indonesia yang mencakup:\n1. Tren umum kepatuhan planning shift\n2. Bulan terbaik dan terburuk\n3. Rekomendasi singkat untuk perbaikan\n\nGunakan bahasa profesional dan langsung to the point.';
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + apiKey,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
       }
     );
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Gagal menghasilkan analisa.';
+    const text = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : 'Gagal menghasilkan analisa.';
     document.getElementById('ai-result').textContent = text;
     document.getElementById('ai-result').classList.remove('hidden');
     btn.textContent = '🔄 REGENERATE';
