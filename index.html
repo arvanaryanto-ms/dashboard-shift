@@ -6,7 +6,6 @@
 <title>Performance Planning & Realisasi Shift</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -420,19 +419,24 @@ function renderAI(text){
 
 
 function downloadExcel(){
-  var btn = document.getElementById('btn-excel');
-  btn.textContent = 'MENYIAPKAN...';
-  btn.disabled = true;
-
   var wb = XLSX.utils.book_new();
   var now = new Date();
   var tglGenerate = now.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})+' '+now.toLocaleTimeString('id-ID');
 
-  // compute stats
-  var pcts  = RAW.map(function(r){return r.pct;});
-  var avg   = pcts.length?(pcts.reduce(function(a,b){return a+b;},0)/pcts.length).toFixed(2):0;
-  var best  = pcts.length?Math.max.apply(null,pcts):0;
-  var worst = pcts.length?Math.min.apply(null,pcts):0;
+  // ---- SHEET 1: LAPORAN LENGKAP ----
+  var wsData = [];
+
+  // JUDUL
+  wsData.push(['PERFORMANCE PLANNING & REALISASI SHIFT']);
+  wsData.push(['Operational Analytics Dashboard']);
+  wsData.push(['Tanggal Generate: '+tglGenerate]);
+  wsData.push([]);
+
+  // STATS CARDS
+  var pcts = RAW.map(function(r){return r.pct;});
+  var avg  = pcts.length?(pcts.reduce(function(a,b){return a+b;},0)/pcts.length).toFixed(2):0;
+  var best = pcts.length?Math.max.apply(null,pcts):0;
+  var worst= pcts.length?Math.min.apply(null,pcts):0;
   var bestM = RAW.find(function(r){return r.pct===best;});
   var worstM= RAW.find(function(r){return r.pct===worst;});
   var baik  = RAW.filter(function(r){return r.pct>=75;}).length;
@@ -441,183 +445,50 @@ function downloadExcel(){
   var totalSesuai = RAW.reduce(function(a,r){return a+r.sesuai;},0);
   var totalAll    = RAW.reduce(function(a,r){return a+r.total;},0);
 
-  // helper: cell with style
-  function cs(v, bold, bgHex, fgHex, sz, wrap){
-    return {
-      v: v, t: typeof v==='number'?'n':'s',
-      s: {
-        font:  { bold: bold||false, sz: sz||11, color: { rgb: (fgHex||'E2E8F0') } },
-        fill:  { fgColor: { rgb: bgHex||'0D1120' }, patternType: 'solid' },
-        alignment: { wrapText: wrap||false, vertical:'center' },
-        border: {
-          top:    {style:'thin', color:{rgb:'1A2744'}},
-          bottom: {style:'thin', color:{rgb:'1A2744'}},
-          left:   {style:'thin', color:{rgb:'1A2744'}},
-          right:  {style:'thin', color:{rgb:'1A2744'}}
-        }
-      }
-    };
-  }
-  function empty(bg){ return cs('','',bg||'0D1120'); }
+  wsData.push(['RINGKASAN STATISTIK']);
+  wsData.push(['Metrik','Nilai','Keterangan']);
+  wsData.push(['Rata-rata Kepatuhan', avg+'%', RAW.length+' bulan data']);
+  wsData.push(['Terbaik', best+'%', bestM?bestM.month:'-']);
+  wsData.push(['Terburuk', worst+'%', worstM?worstM.month:'-']);
+  wsData.push(['Status Baik (≥75%)', baik+' bulan', '']);
+  wsData.push(['Status Cukup (50-74%)', cukup+' bulan', '']);
+  wsData.push(['Status Buruk (<50%)', buruk+' bulan', '']);
+  wsData.push(['Total Realisasi Sesuai', totalSesuai.toLocaleString(), 'dari '+totalAll.toLocaleString()+' total']);
+  wsData.push([]);
 
-  var ws = {};
-  var R = 0; // current row (0-indexed)
-
-  function setCell(col, row, cell){
-    var addr = XLSX.utils.encode_cell({c:col, r:row});
-    ws[addr] = cell;
-  }
-  function setRange(c1,r1,c2,r2){ return {s:{c:c1,r:r1},e:{c:c2,r:r2}}; }
-
-  // ---- ROW 0-2: JUDUL ----
-  setCell(0, R, cs('PERFORMANCE PLANNING & REALISASI SHIFT', true, '0A0D18', '4A9EFF', 14));
-  setCell(1, R, empty('0A0D18')); setCell(2, R, empty('0A0D18')); setCell(3, R, empty('0A0D18'));
-  setCell(4, R, empty('0A0D18')); setCell(5, R, empty('0A0D18')); setCell(6, R, empty('0A0D18')); setCell(7, R, empty('0A0D18'));
-  R++;
-  setCell(0, R, cs('Operational Analytics Dashboard', false, '0A0D18', '64748B', 11));
-  for(var c=1;c<=7;c++) setCell(c, R, empty('0A0D18'));
-  R++;
-  setCell(0, R, cs('Tanggal Generate: '+tglGenerate, false, '0A0D18', '64748B', 10));
-  for(var c=1;c<=7;c++) setCell(c, R, empty('0A0D18'));
-  R++;
-  for(var c=0;c<=7;c++) setCell(c, R, empty('0A0D18')); R++;
-
-  // ---- CARDS SECTION HEADER ----
-  setCell(0, R, cs('RINGKASAN STATISTIK', true, '0A0D18', '4A9EFF', 10));
-  for(var c=1;c<=7;c++) setCell(c, R, empty('0A0D18'));
-  R++;
-  for(var c=0;c<=7;c++) setCell(c, R, empty('0A0D18')); R++;
-
-  // Card row 1: AVG | TERBAIK | TERBURUK | STATUS BAIK
-  var avgColor  = parseFloat(avg)>=75?'22C55E':parseFloat(avg)>=50?'FBBF24':'F87171';
-  var avgBg     = parseFloat(avg)>=75?'0F3320':parseFloat(avg)>=50?'3A2500':'2A0A0A';
-  var cardRow1  = R;
-
-  // Card: AVG KEPATUHAN
-  setCell(0, R, cs('AVG KEPATUHAN', true, '0D1120', '3D5070', 9));
-  setCell(1, R, cs('TERBAIK', true, '0D1120', '3D5070', 9));
-  setCell(2, R, cs('TERBURUK', true, '0D1120', '3D5070', 9));
-  setCell(3, R, cs('STATUS BAIK', true, '0D1120', '3D5070', 9));
-  setCell(4, R, cs('STATUS CUKUP', true, '0D1120', '3D5070', 9));
-  setCell(5, R, cs('STATUS BURUK', true, '0D1120', '3D5070', 9));
-  setCell(6, R, cs('TOTAL SESUAI', true, '0D1120', '3D5070', 9));
-  setCell(7, R, empty('0D1120'));
-  R++;
-
-  setCell(0, R, cs(avg+'%', true, avgBg, avgColor, 18));
-  setCell(1, R, cs(best+'%', true, '0F3320', '22C55E', 18));
-  setCell(2, R, cs(worst+'%', true, '2A0A0A', 'F87171', 18));
-  setCell(3, R, cs(baik+' bulan', true, '0F3320', '22C55E', 18));
-  setCell(4, R, cs(cukup+' bulan', true, '3A2500', 'FBBF24', 18));
-  setCell(5, R, cs(buruk+' bulan', true, '2A0A0A', 'F87171', 18));
-  setCell(6, R, cs(totalSesuai.toLocaleString(), true, '0A1628', '4A9EFF', 18));
-  setCell(7, R, empty('0D1120'));
-  R++;
-
-  setCell(0, R, cs(RAW.length+' bulan data', false, avgBg, avgColor, 9));
-  setCell(1, R, cs(bestM?bestM.month:'-', false, '0F3320', '22C55E', 9));
-  setCell(2, R, cs(worstM?worstM.month:'-', false, '2A0A0A', 'F87171', 9));
-  setCell(3, R, cs('>= 75% kepatuhan', false, '0F3320', '22C55E', 9));
-  setCell(4, R, cs('50-74% kepatuhan', false, '3A2500', 'FBBF24', 9));
-  setCell(5, R, cs('< 50% kepatuhan', false, '2A0A0A', 'F87171', 9));
-  setCell(6, R, cs('dari '+totalAll.toLocaleString()+' total', false, '0A1628', '4A9EFF', 9));
-  setCell(7, R, empty('0D1120'));
-  R++;
-  for(var c=0;c<=7;c++) setCell(c, R, empty('0A0D18')); R++;
-
-  // ---- DATA TABLE ----
-  setCell(0, R, cs('DATA PLANNING & REALISASI SHIFT', true, '0A0D18', '4A9EFF', 11));
-  for(var c=1;c<=7;c++) setCell(c, R, empty('0A0D18'));
-  R++;
-
-  // header row
-  var hdrs = ['BULAN','REALISASI SESUAI','REALISASI TIDAK SESUAI','TOTAL','PCT SESUAI (%)','TREND','MOM CHANGE','STATUS'];
-  hdrs.forEach(function(h,c){ setCell(c, R, cs(h, true, '07090F', '475569', 9)); });
-  R++;
-
-  // data rows
+  // DATA TABEL
+  wsData.push(['DATA PLANNING & REALISASI SHIFT']);
+  wsData.push(['Bulan','Realisasi Sesuai','Realisasi Tidak Sesuai','Total','Pct Sesuai (%)','Trend','MoM Change','Status']);
   RAW.forEach(function(r){
-    var pct = r.pct;
-    var statusClean = r.status.replace(/[^ -]/g,'').trim();
-    var trendClean  = r.trend==='⬆️'?'Naik':r.trend==='⬇️'?'Turun':'Tetap';
-    var momClean    = r.mom||'-';
-    var rowBg = pct>=75?'091A0F':pct>=50?'1A1200':'1A0808';
-    var pctColor = pct>=75?'22C55E':pct>=50?'FBBF24':'F87171';
-    setCell(0, R, cs(r.month, false, rowBg, '7AB4E8', 10));
-    setCell(1, R, cs(r.sesuai, false, rowBg, '22C55E', 10));
-    setCell(2, R, cs(r.tidak, false, rowBg, 'F87171', 10));
-    setCell(3, R, cs(r.total, false, rowBg, '94A3B8', 10));
-    setCell(4, R, cs(pct+'%', true, rowBg, pctColor, 10));
-    setCell(5, R, cs(trendClean, false, rowBg, '94A3B8', 10));
-    setCell(6, R, cs(momClean, false, rowBg, '94A3B8', 10));
-    setCell(7, R, cs(statusClean||r.status, false, rowBg, pctColor, 10));
-    R++;
+    wsData.push([r.month, r.sesuai, r.tidak, r.total, r.pct+'%', r.trend, r.mom, r.status]);
   });
-  for(var c=0;c<=7;c++) setCell(c, R, empty('0A0D18')); R++;
+  wsData.push([]);
 
-  // ---- ANALISA AI ----
-  setCell(0, R, cs('ANALISA AI', true, '0A0D18', '4A9EFF', 11));
-  for(var c=1;c<=7;c++) setCell(c, R, empty('0A0D18'));
-  R++;
-
+  // ANALISA AI
   var aiResult = document.getElementById('ai-result');
+  wsData.push(['ANALISA AI']);
   if(aiResult && aiResult.innerHTML){
     var blocks = aiResult.querySelectorAll('.ai-block');
     blocks.forEach(function(block){
       var title = block.querySelector('.ai-block-title');
       var text  = block.querySelector('.ai-block-text');
-      if(title){
-        setCell(0, R, cs(title.textContent.trim(), true, '0A1628', '4A9EFF', 10));
-        for(var c=1;c<=7;c++) setCell(c, R, empty('0A1628'));
-        R++;
-      }
-      if(text){
-        var txt = text.textContent.trim();
-        setCell(0, R, {v:txt, t:'s', s:{
-          font:{sz:10, color:{rgb:'94A3B8'}},
-          fill:{fgColor:{rgb:'0D1120'}, patternType:'solid'},
-          alignment:{wrapText:true, vertical:'top'}
-        }});
-        for(var c=1;c<=7;c++) setCell(c, R, {v:'', t:'s', s:{
-          fill:{fgColor:{rgb:'0D1120'}, patternType:'solid'},
-          alignment:{wrapText:true}
-        }});
-        // merge across columns for wrap text
-        if(!ws['!merges']) ws['!merges'] = [];
-        ws['!merges'].push({s:{c:0,r:R},e:{c:7,r:R}});
-        R++;
-      }
-      for(var c=0;c<=7;c++) setCell(c, R, empty('0A0D18')); R++;
+      if(title) wsData.push([title.textContent.trim()]);
+      if(text)  wsData.push([text.textContent.trim()]);
+      wsData.push([]);
     });
   } else {
-    setCell(0, R, cs('Analisa AI belum di-generate.', false, '0D1120', '3D5070', 10));
-    for(var c=1;c<=7;c++) setCell(c, R, empty('0D1120'));
-    R++;
+    wsData.push(['Analisa AI belum di-generate.']);
   }
 
-  // set sheet range
-  ws['!ref'] = XLSX.utils.encode_range({s:{c:0,r:0},e:{c:7,r:R}});
-  ws['!cols'] = [{wch:22},{wch:18},{wch:22},{wch:12},{wch:14},{wch:8},{wch:12},{wch:18}];
-  ws['!rows'] = [];
-  for(var i=0;i<R;i++){
-    if(i===cardRow1+1) ws['!rows'][i]={hpt:36};
-    else if(i===cardRow1+2) ws['!rows'][i]={hpt:20};
-    else ws['!rows'][i]={hpt:18};
-  }
+  var ws = XLSX.utils.aoa_to_sheet(wsData);
 
-  // merge title cells
-  if(!ws['!merges']) ws['!merges'] = [];
-  ws['!merges'].push({s:{c:0,r:0},e:{c:7,r:0}});
-  ws['!merges'].push({s:{c:0,r:1},e:{c:7,r:1}});
-  ws['!merges'].push({s:{c:0,r:2},e:{c:7,r:2}});
+  // column width
+  ws['!cols'] = [{wch:30},{wch:20},{wch:25},{wch:15},{wch:15},{wch:10},{wch:15},{wch:15}];
 
   XLSX.utils.book_append_sheet(wb, ws, 'Laporan');
 
   var fname = 'Performance_Planning_Shift_'+now.getFullYear()+('0'+(now.getMonth()+1)).slice(-2)+('0'+now.getDate()).slice(-2)+'.xlsx';
   XLSX.writeFile(wb, fname);
-
-  btn.textContent = 'DOWNLOAD EXCEL';
-  btn.disabled = false;
 }
 
 window.onload=function(){
