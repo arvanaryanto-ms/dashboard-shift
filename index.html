@@ -3,255 +3,576 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>⚙️ Performance Planning & Realisasi Shift</title>
+<title>Operational Analytics Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'IBM Plex Mono', monospace; background: #0a0e1a; min-height: 100vh; color: #e2e8f0; padding: 28px; }
-  .header { margin-bottom: 28px; border-bottom: 1px solid #1e3a5f; padding-bottom: 18px; }
-  .header-label { font-size: 11px; color: #4a9eff; letter-spacing: 3px; margin-bottom: 8px; }
-  .header h1 { font-size: 22px; font-weight: 600; color: #fff; letter-spacing: 1px; }
-  .header-sub { font-size: 12px; color: #64748b; margin-top: 6px; }
-  .upload-area { border: 2px dashed #1e3a5f; border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; margin-bottom: 28px; background: #0f1624; transition: all 0.2s; }
-  .upload-area:hover { border-color: #4a9eff44; background: #111a2e; }
-  .upload-area.loaded { border-color: #22c55e44; background: #0d1f12; }
-  .upload-icon { font-size: 28px; margin-bottom: 10px; }
-  .upload-title { color: #4a9eff; font-size: 13px; font-weight: 500; }
-  .upload-sub { color: #334155; font-size: 11px; margin-top: 6px; }
-  .upload-success { color: #22c55e; font-size: 13px; font-weight: 500; }
-  .upload-meta { color: #64748b; font-size: 11px; margin-top: 4px; }
-  .error-msg { color: #f87171; font-size: 12px; margin-top: 10px; }
-  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
-  .card { background: #0f1624; border-radius: 8px; padding: 16px 20px; }
-  .card-label { font-size: 10px; color: #64748b; letter-spacing: 2px; margin-bottom: 8px; }
-  .card-value { font-size: 24px; font-weight: 600; }
-  .card-sub { font-size: 11px; color: #475569; margin-top: 4px; }
-  .table-wrap { background: #0f1624; border: 1px solid #1e3a5f; border-radius: 8px; margin-bottom: 28px; overflow: hidden; }
-  .table-header { padding: 14px 20px; border-bottom: 1px solid #1e3a5f; font-size: 11px; color: #4a9eff; letter-spacing: 2px; }
-  .table-scroll { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  thead tr { background: #0a0e1a; }
-  th { padding: 10px 16px; text-align: left; color: #64748b; font-weight: 500; letter-spacing: 1px; font-size: 10px; white-space: nowrap; }
-  tbody tr { border-top: 1px solid #1a2744; transition: background 0.15s; }
-  tbody tr:hover { background: #13203a; }
-  td { padding: 10px 16px; }
-  .td-month { color: #93c5fd; font-weight: 500; }
-  .td-sesuai { color: #22c55e; }
-  .td-tidak { color: #f87171; }
-  .td-total { color: #94a3b8; }
-  .badge { padding: 2px 8px; border-radius: 4px; font-weight: 600; }
-  .badge-baik { background: #14532d; color: #22c55e; }
-  .badge-cukup { background: #713f12; color: #fbbf24; }
-  .badge-buruk { background: #450a0a; color: #f87171; }
-  .ai-wrap { background: #0f1624; border: 1px solid #1e3a5f; border-radius: 8px; overflow: hidden; }
-  .ai-header { padding: 14px 20px; border-bottom: 1px solid #1e3a5f; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-  .ai-title { font-size: 11px; color: #4a9eff; letter-spacing: 2px; }
-  .ai-badge { font-size: 10px; color: #22c55e; background: #14532d; padding: 2px 8px; border-radius: 4px; }
-  .ai-btn { background: #1d4ed8; color: #fff; border: none; border-radius: 6px; padding: 6px 16px; font-size: 11px; cursor: pointer; letter-spacing: 1px; font-family: 'IBM Plex Mono', monospace; transition: background 0.2s; }
-  .ai-btn:hover { background: #1e40af; }
-  .ai-btn:disabled { background: #1e3a5f; color: #64748b; cursor: not-allowed; }
-  .ai-key-wrap { padding: 12px 20px; border-bottom: 1px solid #1e3a5f; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #0a0e1a; }
-  .ai-key-label { font-size: 11px; color: #64748b; white-space: nowrap; }
-  .ai-key-input { flex: 1; min-width: 200px; background: #0f1624; border: 1px solid #1e3a5f; border-radius: 6px; padding: 6px 12px; color: #e2e8f0; font-family: 'IBM Plex Mono', monospace; font-size: 11px; outline: none; }
-  .ai-key-input:focus { border-color: #4a9eff55; }
-  .ai-key-save { background: #0f2a4a; color: #4a9eff; border: 1px solid #1e3a5f; border-radius: 6px; padding: 6px 12px; font-size: 11px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; white-space: nowrap; }
-  .ai-key-save:hover { background: #1e3a5f; }
-  .key-saved { color: #22c55e; font-size: 11px; }
-  .ai-note { font-size: 10px; color: #475569; padding: 8px 20px; border-bottom: 1px solid #1e3a5f; background: #0a0e1a; }
-  .ai-note a { color: #4a9eff; text-decoration: none; }
-  .ai-body { padding: 20px 24px; min-height: 80px; }
-  .ai-placeholder { color: #334155; font-size: 13px; font-style: italic; }
-  .ai-loading { display: flex; align-items: center; gap: 12px; color: #4a9eff; font-size: 13px; }
-  .spinner { width: 16px; height: 16px; border: 2px solid #1e3a5f; border-top: 2px solid #4a9eff; border-radius: 50%; animation: spin 1s linear infinite; flex-shrink: 0; }
-  .ai-result { font-size: 14px; line-height: 1.8; color: #cbd5e1; font-family: 'IBM Plex Sans', sans-serif; font-weight: 300; }
-  .hidden { display: none; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @media (max-width: 600px) { .cards { grid-template-columns: 1fr; } body { padding: 16px; } }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'IBM Plex Mono',monospace;background:#07090f;min-height:100vh;color:#e2e8f0;}
+
+/* HEADER */
+.header{background:#0a0d18;border-bottom:1px solid #1a2744;padding:18px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.header-left .label{font-size:9px;color:#4a9eff;letter-spacing:4px;margin-bottom:4px;}
+.header-left h1{font-size:17px;font-weight:600;color:#fff;letter-spacing:1px;}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.api-input{background:#0f1624;border:1px solid #1e3a5f;border-radius:6px;padding:7px 12px;color:#e2e8f0;font-family:'IBM Plex Mono',monospace;font-size:11px;outline:none;width:270px;}
+.api-input:focus{border-color:#4a9eff55;}
+.api-input::placeholder{color:#2d3f5a;}
+.btn-key{background:#0f2a4a;color:#4a9eff;border:1px solid #1e3a5f;border-radius:6px;padding:7px 14px;font-size:11px;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:background 0.2s;}
+.btn-key:hover{background:#1a3a5c;}
+.key-ok{font-size:10px;color:#22c55e;display:none;}
+
+/* MAIN TABS */
+.main-tabs{display:flex;background:#0a0d18;border-bottom:1px solid #1a2744;padding:0 32px;overflow-x:auto;gap:0;}
+.main-tab{padding:13px 22px;font-size:10px;letter-spacing:2px;color:#3d5070;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.2s;user-select:none;}
+.main-tab:hover{color:#7a9cc4;}
+.main-tab.active{color:#4a9eff;border-bottom-color:#4a9eff;background:#0d1525;}
+
+/* CONTENT */
+.content{padding:28px 32px;max-width:1600px;margin:0 auto;}
+.tab-panel{display:none;animation:fadeIn 0.2s ease;}
+.tab-panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+/* SECTION HEADER */
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.section-title{font-size:10px;color:#4a9eff;letter-spacing:3px;display:flex;align-items:center;gap:10px;}
+.section-title::after{content:'';width:60px;height:1px;background:#1a2744;}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed #1a2744;border-radius:12px;padding:28px;text-align:center;cursor:pointer;margin-bottom:24px;background:#0a0d18;transition:all 0.2s;position:relative;}
+.upload-zone:hover{border-color:#2a4a7f;background:#0c1120;}
+.upload-zone.loaded{border-color:#1a4a2a;background:#091410;}
+.upload-zone.drag{border-color:#4a9eff;background:#0c1828;}
+.upload-icon{font-size:28px;margin-bottom:10px;}
+.upload-label{color:#4a9eff;font-size:12px;font-weight:500;margin-bottom:4px;}
+.upload-hint{color:#2d3f5a;font-size:10px;}
+.upload-ok{color:#22c55e;font-size:12px;font-weight:500;}
+.upload-meta{color:#3d5a70;font-size:10px;margin-top:3px;}
+.err-msg{color:#f87171;font-size:11px;margin-top:8px;}
+.btn-dl-template{position:absolute;top:12px;right:12px;background:#0f2a4a;color:#4a9eff;border:1px solid #1e3a5f;border-radius:6px;padding:5px 12px;font-size:10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;transition:background 0.2s;}
+.btn-dl-template:hover{background:#1a3a5c;}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+.filter-label{font-size:10px;color:#3d5070;letter-spacing:1px;}
+.filter-btn{padding:5px 14px;font-size:10px;letter-spacing:1px;color:#3d5070;cursor:pointer;border-radius:6px;border:1px solid #1a2744;background:#0f1624;transition:all 0.2s;font-family:'IBM Plex Mono',monospace;}
+.filter-btn:hover{color:#7a9cc4;border-color:#2a4060;}
+.filter-btn.active{color:#4a9eff;border-color:#4a9eff44;background:#0a1628;}
+.filter-sep{width:1px;height:20px;background:#1a2744;}
+
+/* CARDS */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;}
+.card{background:#0d1120;border-radius:10px;padding:16px 18px;border:1px solid #1a2744;transition:border-color 0.2s;}
+.card:hover{border-color:#2a3a5a;}
+.card-label{font-size:9px;color:#3d5070;letter-spacing:2px;margin-bottom:8px;}
+.card-value{font-size:22px;font-weight:700;line-height:1;}
+.card-sub{font-size:10px;color:#3d5070;margin-top:5px;}
+.c-green{color:#22c55e;} .c-red{color:#f87171;} .c-blue{color:#4a9eff;} .c-yellow{color:#fbbf24;} .c-purple{color:#a78bfa;} .c-orange{color:#fb923c;}
+
+/* TABLE */
+.table-wrap{background:#0d1120;border:1px solid #1a2744;border-radius:10px;margin-bottom:24px;overflow:hidden;}
+.table-topbar{padding:12px 18px;border-bottom:1px solid #1a2744;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.table-toplabel{font-size:10px;color:#4a9eff;letter-spacing:2px;}
+.table-count{font-size:10px;color:#3d5070;}
+.tbl-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+thead tr{background:#07090f;}
+th{padding:10px 14px;text-align:left;color:#3d5070;font-weight:500;letter-spacing:1px;font-size:9px;white-space:nowrap;border-bottom:1px solid #1a2744;}
+tbody tr{border-top:1px solid #0f1828;transition:background 0.1s;}
+tbody tr:hover{background:#0d1828;}
+td{padding:9px 14px;white-space:nowrap;}
+.badge{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:0.5px;}
+.b-green{background:#0f3320;color:#22c55e;}
+.b-yellow{background:#3a2500;color:#fbbf24;}
+.b-red{background:#2a0a0a;color:#f87171;}
+.b-blue{background:#0a1f3a;color:#4a9eff;}
+
+/* AI SECTION */
+.ai-wrap{background:#0d1120;border:1px solid #1a2744;border-radius:10px;overflow:hidden;margin-bottom:24px;}
+.ai-topbar{padding:14px 20px;border-bottom:1px solid #1a2744;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:#0a0d18;}
+.ai-toplabel{font-size:10px;color:#4a9eff;letter-spacing:2px;}
+.ai-controls{display:flex;gap:8px;align-items:center;}
+.ai-free-badge{font-size:9px;color:#22c55e;background:#0f3320;padding:3px 8px;border-radius:4px;letter-spacing:1px;}
+.btn-ai{background:#1d4ed8;color:#fff;border:none;border-radius:6px;padding:7px 18px;font-size:10px;cursor:pointer;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;transition:background 0.2s;font-weight:500;}
+.btn-ai:hover{background:#1e40af;}
+.btn-ai:disabled{background:#1a2744;color:#3d5070;cursor:not-allowed;}
+.ai-body{padding:0;}
+.ai-block{padding:20px 24px;border-bottom:1px solid #0f1828;}
+.ai-block:last-child{border-bottom:none;}
+.ai-block-title{font-size:9px;color:#4a9eff;letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.ai-block-title::after{content:'';flex:1;height:1px;background:#1a2744;}
+.ai-block-text{font-size:13px;line-height:1.9;color:#94a3b8;font-family:'IBM Plex Sans',sans-serif;font-weight:300;}
+.ai-placeholder{padding:28px 24px;color:#2d3f5a;font-size:12px;font-style:italic;text-align:center;}
+.ai-loading{padding:28px 24px;display:flex;align-items:center;gap:12px;color:#4a9eff;font-size:12px;justify-content:center;}
+.spinner{width:14px;height:14px;border:2px solid #1e3a5f;border-top:2px solid #4a9eff;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.hidden{display:none!important;}
+
+/* EMPTY STATE */
+.empty-state{padding:48px;text-align:center;color:#2d3f5a;font-size:12px;}
+
+@media(max-width:640px){.content{padding:16px;}.header{padding:14px 16px;}.main-tabs{padding:0 16px;}.api-input{width:200px;}}
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header">
-  <div class="header-label">⚙️ PERFORMANCE DASHBOARD</div>
-  <h1>Planning & Realisasi Shift</h1>
-  <div class="header-sub" id="header-sub">10 Bulan Berjalan · Upload CSV dari Metabase</div>
+  <div class="header-left">
+    <div class="label">OPERATIONAL ANALYTICS DASHBOARD</div>
+    <h1>Logistik & Warehouse</h1>
+  </div>
+  <div class="header-right">
+    <input type="password" class="api-input" id="api-key" placeholder="OpenRouter API Key (sk-or-v1-...)" oninput="document.getElementById('key-ok').style.display='none'"/>
+    <button class="btn-key" onclick="saveKey()">SIMPAN KEY</button>
+    <span class="key-ok" id="key-ok">✓ TERSIMPAN</span>
+  </div>
 </div>
 
-<div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()"
-  ondragover="event.preventDefault()" ondrop="handleDrop(event)">
-  <input type="file" id="file-input" accept=".csv" style="display:none" onchange="handleFile(this.files[0])"/>
-  <div id="upload-idle">
-    <div class="upload-icon">📂</div>
-    <div class="upload-title">Upload CSV dari Metabase</div>
-    <div class="upload-sub">Drag & drop atau klik untuk pilih file</div>
-  </div>
-  <div id="upload-done" class="hidden">
-    <div class="upload-icon">✅</div>
-    <div class="upload-success" id="file-name"></div>
-    <div class="upload-meta" id="file-meta"></div>
-  </div>
-  <div class="error-msg hidden" id="error-msg"></div>
+<!-- MAIN TABS -->
+<div class="main-tabs">
+  <div class="main-tab active" onclick="switchTab(0)">ANALISIS LOADING VS TARGET</div>
+  <div class="main-tab" onclick="switchTab(1)">TRAFFIC IN-OUT HARIAN</div>
+  <div class="main-tab" onclick="switchTab(2)">PERFORMANCE PLANNING</div>
+  <div class="main-tab" onclick="switchTab(3)">ANALISA AI GABUNGAN</div>
 </div>
 
-<div id="dashboard" class="hidden">
-  <div class="cards">
-    <div class="card" style="border:1px solid #4a9eff22">
-      <div class="card-label">AVG Kepatuhan</div>
-      <div class="card-value" id="avg-pct" style="color:#4a9eff">-</div>
-      <div class="card-sub" id="avg-sub">Rata-rata bulan</div>
-    </div>
-    <div class="card" style="border:1px solid #22c55e22">
-      <div class="card-label">🏆 Best Month</div>
-      <div class="card-value" id="best-month" style="color:#22c55e">-</div>
-      <div class="card-sub" id="best-sub">kepatuhan</div>
-    </div>
-    <div class="card" style="border:1px solid #f59e0b22">
-      <div class="card-label">⚠️ Worst Month</div>
-      <div class="card-value" id="worst-month" style="color:#f59e0b">-</div>
-      <div class="card-sub" id="worst-sub">kepatuhan</div>
-    </div>
-  </div>
+<!-- =================== TAB 0: LOADING VS TARGET =================== -->
+<div class="tab-panel active" id="tab-0">
+  <div class="content">
 
-  <div class="table-wrap">
-    <div class="table-header" id="table-label">DATA · URUT PCT TERTINGGI</div>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Month</th><th>Realisasi Sesuai</th><th>Tidak Sesuai</th>
-            <th>Total</th><th>Pct Sesuai</th><th>Trend</th><th>MoM Change</th><th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-      </table>
+    <!-- UPLOAD -->
+    <div class="section-head">
+      <div class="section-title">UPLOAD DATA</div>
     </div>
-  </div>
+    <div class="upload-zone" id="uz-0" onclick="triggerFile('fi-0')" ondragover="onDrag(event,'uz-0')" ondragleave="offDrag('uz-0')" ondrop="onDrop(event,'fi-0','uz-0','tab0')">
+      <input type="file" id="fi-0" accept=".csv" style="display:none" onchange="readCSV(this,'tab0')"/>
+      <button class="btn-dl-template" onclick="event.stopPropagation();dlTemplate()">↓ DOWNLOAD TEMPLATE</button>
+      <div class="upload-icon">📦</div>
+      <div class="upload-label" id="uz-0-title">Upload CSV — Analisis Waktu Loading vs Target</div>
+      <div class="upload-hint" id="uz-0-sub">Drag & drop atau klik · Export dari Metabase · Query: Analisis Waktu Loading vs Target per Jenis Kendaraan</div>
+      <div class="err-msg hidden" id="uz-0-err"></div>
+    </div>
 
-  <div class="ai-wrap">
-    <div class="ai-header">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="ai-title">🤖 AI SUMMARY ANALISA</div>
-        <span class="ai-badge">✅ GRATIS · OpenRouter</span>
+    <!-- FILTER -->
+    <div class="filter-bar hidden" id="filter-0">
+      <span class="filter-label">JENIS LOAD:</span>
+      <div class="filter-btn active" onclick="setFilter('jns','ALL',this)">SEMUA</div>
+      <div class="filter-btn" onclick="setFilter('jns','Loading',this)">LOADING</div>
+      <div class="filter-btn" onclick="setFilter('jns','Unloading',this)">UNLOADING</div>
+      <div class="filter-sep"></div>
+      <span class="filter-label">KENDARAAN:</span>
+      <div class="filter-btn active" onclick="setFilter('kend','ALL',this)">SEMUA</div>
+      <div class="filter-btn" onclick="setFilter('kend','2',this)">2T</div>
+      <div class="filter-btn" onclick="setFilter('kend','4',this)">4T</div>
+      <div class="filter-btn" onclick="setFilter('kend','10',this)">10T</div>
+      <div class="filter-btn" onclick="setFilter('kend','15',this)">15T</div>
+      <div class="filter-btn" onclick="setFilter('kend','20',this)">20T</div>
+      <div class="filter-btn" onclick="setFilter('kend','40',this)">40T</div>
+    </div>
+
+    <!-- CARDS -->
+    <div class="cards hidden" id="cards-0"></div>
+
+    <!-- TABLE -->
+    <div class="table-wrap hidden" id="tbl-0">
+      <div class="table-topbar">
+        <div class="table-toplabel">DATA LOADING VS TARGET</div>
+        <div class="table-count" id="tbl-0-count"></div>
       </div>
-      <button class="ai-btn" id="ai-btn" onclick="generateSummary()">✨ GENERATE AI SUMMARY</button>
-    </div>
-    <div class="ai-note">
-      🔗 Daftar gratis di <a href="https://openrouter.ai" target="_blank">openrouter.ai</a> → Keys → Create Key · Pilih model gratis seperti <strong>Llama 3</strong>
-    </div>
-    <div class="ai-key-wrap">
-      <span class="ai-key-label">🔑 OpenRouter API Key:</span>
-      <input type="password" class="ai-key-input" id="api-key-input" placeholder="sk-or-v1-..."/>
-      <button class="ai-key-save" onclick="saveKey()">Simpan</button>
-      <span class="key-saved hidden" id="key-saved">✅ Tersimpan</span>
-    </div>
-    <div class="ai-body">
-      <div class="ai-placeholder" id="ai-placeholder">
-        Masukkan OpenRouter API Key lalu klik "Generate AI Summary".
+      <div class="tbl-scroll">
+        <table><thead id="th-0"><tr>
+          <th>TANGGAL</th><th>JENIS KENDARAAN</th><th>JNS LOAD</th><th>TRUCK</th>
+          <th>AVG MENIT</th><th>TARGET MENIT</th><th>DEVIASI</th><th>STATUS</th>
+        </tr></thead><tbody id="tb-0"></tbody></table>
       </div>
-      <div class="ai-loading hidden" id="ai-loading"><div class="spinner"></div><span>AI sedang menganalisa data...</span></div>
-      <div class="ai-result hidden" id="ai-result"></div>
     </div>
+
+    <!-- AI SUMMARY -->
+    <div class="ai-wrap hidden" id="ai-0">
+      <div class="ai-topbar">
+        <div class="ai-toplabel">✨ ANALISA AI — LOADING VS TARGET</div>
+        <div class="ai-controls">
+          <span class="ai-free-badge">GRATIS · OpenRouter</span>
+          <button class="btn-ai" id="ai-btn-0" onclick="generateAI('tab0')">GENERATE ANALISA</button>
+        </div>
+      </div>
+      <div id="ai-body-0">
+        <div class="ai-placeholder" id="ai-ph-0">Klik "Generate Analisa" untuk mendapatkan analisa AI berdasarkan data yang diupload.</div>
+        <div class="ai-loading hidden" id="ai-ld-0"><div class="spinner"></div>AI sedang menganalisa data...</div>
+        <div id="ai-result-0"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- =================== TAB 1: TRAFFIC =================== -->
+<div class="tab-panel" id="tab-1">
+  <div class="content">
+    <div class="empty-state">🚛 Sub-tab Traffic In-Out — Segera hadir</div>
+  </div>
+</div>
+
+<!-- =================== TAB 2: PERFORMANCE =================== -->
+<div class="tab-panel" id="tab-2">
+  <div class="content">
+    <div class="empty-state">📊 Sub-tab Performance Planning — Segera hadir</div>
+  </div>
+</div>
+
+<!-- =================== TAB 3: AI GABUNGAN =================== -->
+<div class="tab-panel" id="tab-3">
+  <div class="content">
+    <div class="empty-state">🤖 Analisa AI Gabungan — Aktif setelah semua tab diupload</div>
   </div>
 </div>
 
 <script>
-let csvData = [];
-let apiKey = '';
+// ========== STATE ==========
+var DS = {
+  tab0: { raw: [], filtered: [], filters: { jns: 'ALL', kend: 'ALL' } }
+};
 
+// ========== API KEY ==========
 function saveKey() {
-  apiKey = document.getElementById('api-key-input').value.trim();
-  if (apiKey) {
-    document.getElementById('key-saved').classList.remove('hidden');
-    setTimeout(function() { document.getElementById('key-saved').classList.add('hidden'); }, 2000);
-  }
+  var k = document.getElementById('api-key').value.trim();
+  if (!k) return;
+  sessionStorage.setItem('or_key', k);
+  document.getElementById('key-ok').style.display = 'inline';
+}
+function getKey() {
+  return document.getElementById('api-key').value.trim() || sessionStorage.getItem('or_key') || '';
 }
 
-function handleDrop(e) {
-  e.preventDefault();
-  handleFile(e.dataTransfer.files[0]);
+// ========== TAB NAV ==========
+function switchTab(idx) {
+  document.querySelectorAll('.main-tab').forEach(function(t, i) { t.classList.toggle('active', i === idx); });
+  document.querySelectorAll('.tab-panel').forEach(function(p, i) { p.classList.toggle('active', i === idx); });
 }
 
-function handleFile(file) {
-  if (!file) return;
+// ========== UPLOAD ==========
+function triggerFile(id) { document.getElementById(id).click(); }
+function onDrag(e, id) { e.preventDefault(); document.getElementById(id).classList.add('drag'); }
+function offDrag(id) { document.getElementById(id).classList.remove('drag'); }
+function onDrop(e, fid, uid, tab) {
+  e.preventDefault(); offDrag(uid);
+  var f = e.dataTransfer.files[0];
+  if (f) parseFile(f, tab);
+}
+function readCSV(inp, tab) { if (inp.files[0]) parseFile(inp.files[0], tab); }
+
+function parseFile(file, tab) {
   Papa.parse(file, {
     header: true, skipEmptyLines: true,
-    complete: function(result) {
-      try {
-        csvData = result.data.map(function(row) {
-          var pctRaw = row['Pct_Sesuai'] || row['pct_sesuai'] || '0';
-          var pctNum = parseFloat(pctRaw.toString().replace('%','')) || 0;
-          return {
-            month: row['Month'] || row['month'] || '',
-            sesuai: parseInt((row['Realisasi_Sesuai'] || row['realisasi_sesuai'] || '0').toString().replace(/,/g,'')) || 0,
-            tidak: parseInt((row['Realisasi_Tidak_Sesuai'] || row['realisasi_tidak_sesuai'] || '0').toString().replace(/,/g,'')) || 0,
-            total: parseInt((row['Total'] || row['total'] || '0').toString().replace(/,/g,'')) || 0,
-            pct: pctNum,
-            trend: row['Trend'] || row['trend'] || '-',
-            mom: row['MoM_Change'] || row['mom_change'] || '-',
-            status: row['Status'] || row['status'] || '-',
-          };
-        }).filter(function(r) { return r.month !== ''; });
-        document.getElementById('upload-idle').classList.add('hidden');
-        document.getElementById('upload-done').classList.remove('hidden');
-        document.getElementById('upload-area').classList.add('loaded');
-        document.getElementById('file-name').textContent = file.name;
-        document.getElementById('file-meta').textContent = csvData.length + ' baris data berhasil dibaca · Klik untuk ganti file';
-        document.getElementById('error-msg').classList.add('hidden');
-        renderDashboard();
-      } catch(e) { showError('Format CSV tidak sesuai.'); }
+    complete: function(res) {
+      if (!res.data || res.data.length === 0) { showErr('uz-0-err', 'File CSV kosong.'); return; }
+      if (tab === 'tab0') processTab0(res.data, file.name);
     },
-    error: function() { showError('Gagal membaca file CSV.'); }
+    error: function() { showErr('uz-0-err', 'Gagal membaca file CSV.'); }
   });
 }
 
-function showError(msg) {
-  var el = document.getElementById('error-msg');
-  el.textContent = msg;
-  el.classList.remove('hidden');
+function showErr(id, msg) {
+  var e = document.getElementById(id);
+  e.textContent = msg; e.classList.remove('hidden');
 }
 
-function renderDashboard() {
-  var sorted = csvData.slice().sort(function(a,b) { return b.pct - a.pct; });
-  var best = sorted[0];
-  var worst = sorted[sorted.length-1];
-  var avg = (csvData.reduce(function(s,d) { return s+d.pct; }, 0) / csvData.length).toFixed(2);
-  var months = csvData.map(function(d) { return d.month; }).sort();
-  document.getElementById('header-sub').textContent = csvData.length + ' Bulan Berjalan · ' + months[0] + ' — ' + months[months.length-1];
-  document.getElementById('avg-pct').textContent = avg + '%';
-  document.getElementById('avg-sub').textContent = 'Rata-rata ' + csvData.length + ' bulan';
-  document.getElementById('best-month').textContent = best.month;
-  document.getElementById('best-sub').textContent = best.pct + '% kepatuhan';
-  document.getElementById('worst-month').textContent = worst.month;
-  document.getElementById('worst-sub').textContent = worst.pct + '% kepatuhan';
-  document.getElementById('table-label').textContent = 'DATA ' + csvData.length + ' BULAN · URUT PCT TERTINGGI';
-  var tbody = document.getElementById('table-body');
-  tbody.innerHTML = '';
-  sorted.forEach(function(row) {
-    var bc = row.pct >= 75 ? 'badge-baik' : row.pct >= 50 ? 'badge-cukup' : 'badge-buruk';
-    var mc = row.mom && row.mom.startsWith('+') ? '#22c55e' : row.mom === '-' ? '#64748b' : '#f87171';
-    tbody.innerHTML += '<tr><td class="td-month">' + row.month + '</td><td class="td-sesuai">' + row.sesuai.toLocaleString() + '</td><td class="td-tidak">' + row.tidak.toLocaleString() + '</td><td class="td-total">' + row.total.toLocaleString() + '</td><td><span class="badge ' + bc + '">' + row.pct + '%</span></td><td style="font-size:16px">' + row.trend + '</td><td style="color:' + mc + '">' + row.mom + '</td><td>' + row.status + '</td></tr>';
+// ========== TAB 0 PROCESSING ==========
+function processTab0(data, filename) {
+  // normalize & filter empty rows
+  var clean = data.filter(function(r) {
+    return r.LOADING_DATE && r.JENIS_KENDARAAN;
+  }).map(function(r) {
+    return {
+      date: r.LOADING_DATE || '',
+      kend: String(r.JENIS_KENDARAAN || '').trim(),
+      jns: r.JNS_LOAD || '',
+      truck: parseInt(r.TRUCK) || 0,
+      avg: parseFloat(r.AVG_MINUTE),
+      target: parseFloat(r.TARGET_MINUTE),
+      dev: parseFloat(r.DEV_FROM_TARGET),
+      status: r.STATUS || ''
+    };
   });
-  document.getElementById('dashboard').classList.remove('hidden');
-  document.getElementById('ai-result').classList.add('hidden');
-  document.getElementById('ai-placeholder').classList.remove('hidden');
-  document.getElementById('ai-btn').textContent = '✨ GENERATE AI SUMMARY';
+
+  DS.tab0.raw = clean;
+  DS.tab0.filtered = clean;
+  DS.tab0.filters = { jns: 'ALL', kend: 'ALL' };
+
+  // update upload zone
+  var uz = document.getElementById('uz-0');
+  uz.classList.add('loaded');
+  document.getElementById('uz-0-title').innerHTML = '<span class="upload-ok">✅ ' + filename + '</span>';
+  document.getElementById('uz-0-sub').innerHTML = '<span class="upload-meta">' + clean.length + ' baris valid · Klik untuk ganti file</span>';
+  document.getElementById('uz-0-err').classList.add('hidden');
+
+  // reset filters UI
+  document.querySelectorAll('#filter-0 .filter-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent === 'SEMUA');
+  });
+
+  renderTab0();
+
+  document.getElementById('filter-0').classList.remove('hidden');
+  document.getElementById('cards-0').classList.remove('hidden');
+  document.getElementById('tbl-0').classList.remove('hidden');
+  document.getElementById('ai-0').classList.remove('hidden');
 }
 
-async function generateSummary() {
-  if (!apiKey) { alert('Masukkan OpenRouter API Key terlebih dahulu!'); return; }
-  var btn = document.getElementById('ai-btn');
-  btn.disabled = true;
-  btn.textContent = '⏳ GENERATING...';
-  document.getElementById('ai-placeholder').classList.add('hidden');
-  document.getElementById('ai-result').classList.add('hidden');
-  document.getElementById('ai-loading').classList.remove('hidden');
+function setFilter(type, val, el) {
+  DS.tab0.filters[type] = val;
+  // update active btn in same group
+  var label = type === 'jns' ? 'JENIS LOAD:' : 'KENDARAAN:';
+  el.parentElement.querySelectorAll('.filter-btn').forEach(function(b) {
+    // only toggle btns in same group
+    var prev = b.previousElementSibling;
+    var inGroup = false;
+    var cur = b;
+    while (cur) {
+      if (cur.classList && cur.classList.contains('filter-sep')) break;
+      if (cur.previousElementSibling === null) { inGroup = true; break; }
+      cur = cur.previousElementSibling;
+    }
+  });
+  // simpler: just toggle within same onclick group
+  var allBtns = document.querySelectorAll('#filter-0 .filter-btn');
+  var jnsBtns = ['SEMUA', 'LOADING', 'UNLOADING'];
+  var kendBtns = ['SEMUA', '2T', '4T', '10T', '15T', '20T', '40T'];
+  allBtns.forEach(function(b) {
+    var txt = b.textContent;
+    if (type === 'jns' && jnsBtns.indexOf(txt) >= 0) b.classList.toggle('active', b === el);
+    if (type === 'kend' && kendBtns.indexOf(txt) >= 0) b.classList.toggle('active', b === el);
+  });
 
-  var dataText = csvData.map(function(d) {
-    return d.month + ': Sesuai=' + d.sesuai + ', TidakSesuai=' + d.tidak + ', Total=' + d.total + ', Pct=' + d.pct + '%, Trend=' + d.trend + ', MoM=' + d.mom + ', Status=' + d.status;
+  var d = DS.tab0.raw;
+  if (DS.tab0.filters.jns !== 'ALL') d = d.filter(function(r) { return r.jns === DS.tab0.filters.jns; });
+  if (DS.tab0.filters.kend !== 'ALL') d = d.filter(function(r) { return r.kend === DS.tab0.filters.kend; });
+  DS.tab0.filtered = d;
+  renderTab0();
+}
+
+function renderTab0() {
+  var data = DS.tab0.filtered;
+  renderCards0(data);
+  renderTable0(data);
+  // reset AI
+  document.getElementById('ai-ph-0').classList.remove('hidden');
+  document.getElementById('ai-result-0').innerHTML = '';
+  document.getElementById('ai-btn-0').textContent = 'GENERATE ANALISA';
+}
+
+function renderCards0(data) {
+  var avgs = data.map(function(r) { return r.avg; }).filter(function(v) { return !isNaN(v); });
+  var devs = data.map(function(r) { return r.dev; }).filter(function(v) { return !isNaN(v); });
+  var onTarget = data.filter(function(r) { return r.status && r.status.indexOf('On Target') >= 0; }).length;
+  var toleransi = data.filter(function(r) { return r.status && r.status.indexOf('Toleransi') >= 0; }).length;
+  var overTarget = data.filter(function(r) { return r.status && r.status.indexOf('Over Target') >= 0; }).length;
+  var totalTruck = data.reduce(function(a, r) { return a + r.truck; }, 0);
+  var avgAll = avgs.length ? (avgs.reduce(function(a,b){return a+b;},0)/avgs.length).toFixed(1) : '-';
+  var avgDev = devs.length ? (devs.reduce(function(a,b){return a+b;},0)/devs.length).toFixed(1) : '-';
+  var pctOT = data.length ? Math.round(onTarget/data.length*100) : 0;
+
+  document.getElementById('cards-0').innerHTML =
+    card('TOTAL TRUCK', totalTruck, 'c-blue', 'Semua terdata') +
+    card('AVG WAKTU', avgAll + ' min', avgs.length && parseFloat(avgAll) <= 90 ? 'c-green' : 'c-red', 'Rata-rata keseluruhan') +
+    card('AVG DEVIASI', (parseFloat(avgDev) >= 0 ? '+' : '') + avgDev + ' min', parseFloat(avgDev) <= 0 ? 'c-green' : 'c-red', 'Dari target') +
+    card('ON TARGET', onTarget + ' (' + pctOT + '%)', 'c-green', data.length + ' total baris') +
+    card('TOLERANSI', toleransi, 'c-yellow', '+1 s/d +15 menit') +
+    card('OVER TARGET', overTarget, 'c-red', 'Melewati batas');
+}
+
+function card(label, val, cls, sub) {
+  return '<div class="card"><div class="card-label">' + label + '</div><div class="card-value ' + cls + '">' + val + '</div><div class="card-sub">' + sub + '</div></div>';
+}
+
+function renderTable0(data) {
+  var tbody = document.getElementById('tb-0');
+  document.getElementById('tbl-0-count').textContent = data.length + ' baris';
+  if (data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#3d5070;">Tidak ada data</td></tr>'; return; }
+  tbody.innerHTML = data.map(function(r) {
+    var devStr = isNaN(r.dev) ? '-' : (r.dev >= 0 ? '+' : '') + r.dev + ' min';
+    var devColor = isNaN(r.dev) ? '#3d5070' : r.dev <= 0 ? '#22c55e' : r.dev <= 15 ? '#fbbf24' : '#f87171';
+    var bc = r.status.indexOf('On Target') >= 0 ? 'b-green' : r.status.indexOf('Toleransi') >= 0 ? 'b-yellow' : 'b-red';
+    var kendColor = {'2':'#a78bfa','4':'#4a9eff','10':'#22c55e','15':'#fbbf24','20':'#fb923c','40':'#f87171'};
+    var kc = kendColor[r.kend] || '#94a3b8';
+    return '<tr>' +
+      '<td style="color:#7ab4e8;font-weight:500">' + r.date + '</td>' +
+      '<td><span class="badge b-blue" style="color:' + kc + ';background:#0a1628">' + r.kend + ' TON</span></td>' +
+      '<td style="color:#94a3b8">' + (r.jns || '-') + '</td>' +
+      '<td style="color:#fbbf24;font-weight:600">' + (r.truck || '-') + '</td>' +
+      '<td style="color:#e2e8f0;font-weight:500">' + (isNaN(r.avg) ? '-' : r.avg + ' min') + '</td>' +
+      '<td style="color:#3d5070">' + (isNaN(r.target) ? '-' : r.target + ' min') + '</td>' +
+      '<td style="color:' + devColor + ';font-weight:600">' + devStr + '</td>' +
+      '<td><span class="badge ' + bc + '">' + (r.status || '-') + '</span></td>' +
+      '</tr>';
+  }).join('');
+}
+
+// ========== TEMPLATE DOWNLOAD ==========
+function dlTemplate() {
+  var csv = 'LOADING_DATE,JENIS_KENDARAAN,JNS_LOAD,TRUCK,AVG_MINUTE,TARGET_MINUTE,DEV_FROM_TARGET,STATUS\n' +
+    '"April 1, 2025",10,Loading,5,85,90,-5,🟢 On Target\n' +
+    '"April 1, 2025",15,Unloading,3,125,110,15,🟡 Toleransi\n' +
+    '"April 2, 2025",40,Loading,2,180,150,30,🔴 Over Target\n';
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'template_loading_vs_target.csv';
+  a.click();
+}
+
+// ========== AI SUMMARY ==========
+async function generateAI(tab) {
+  var apiKey = getKey();
+  if (!apiKey) { alert('Masukkan OpenRouter API Key di bagian atas terlebih dahulu.'); return; }
+
+  var data = DS.tab0.filtered;
+  if (!data || data.length === 0) { alert('Tidak ada data untuk dianalisa.'); return; }
+
+  var btn = document.getElementById('ai-btn-0');
+  btn.disabled = true; btn.textContent = 'GENERATING...';
+  document.getElementById('ai-ph-0').classList.add('hidden');
+  document.getElementById('ai-result-0').innerHTML = '';
+  document.getElementById('ai-ld-0').classList.remove('hidden');
+
+  // prepare summary data for AI
+  var byKend = {};
+  data.forEach(function(r) {
+    if (!byKend[r.kend]) byKend[r.kend] = { avgs:[], devs:[], onTarget:0, total:0, trucks:0 };
+    if (!isNaN(r.avg)) byKend[r.kend].avgs.push(r.avg);
+    if (!isNaN(r.dev)) byKend[r.kend].devs.push(r.dev);
+    if (r.status.indexOf('On Target') >= 0) byKend[r.kend].onTarget++;
+    byKend[r.kend].total++;
+    byKend[r.kend].trucks += r.truck;
+  });
+
+  var kendSummary = Object.keys(byKend).sort(function(a,b){return parseInt(a)-parseInt(b);}).map(function(k) {
+    var d = byKend[k];
+    var avg = d.avgs.length ? (d.avgs.reduce(function(a,b){return a+b;},0)/d.avgs.length).toFixed(1) : 'N/A';
+    var avgDev = d.devs.length ? (d.devs.reduce(function(a,b){return a+b;},0)/d.devs.length).toFixed(1) : 'N/A';
+    var pct = d.total ? Math.round(d.onTarget/d.total*100) : 0;
+    return 'Kendaraan '+k+' ton: AvgWaktu='+avg+'mnt, AvgDeviasi='+avgDev+'mnt, OnTarget='+pct+'%, TotalTruck='+d.trucks;
   }).join('\n');
 
-  var prompt = 'Kamu adalah analis operasional logistik. Berikut data Performance Planning & Realisasi Shift:\n\n' + dataText + '\n\nBuatkan summary analisa dalam 1 paragraf singkat (3-5 kalimat) dalam Bahasa Indonesia yang mencakup:\n1. Tren umum kepatuhan planning shift\n2. Bulan terbaik dan terburuk\n3. Rekomendasi singkat untuk perbaikan\n\nGunakan bahasa profesional dan langsung to the point.';
+  // monthly trend
+  var byMonth = {};
+  data.forEach(function(r) {
+    var m = r.date ? r.date.substring(0,8) : 'Unknown';
+    if (!byMonth[m]) byMonth[m] = { devs:[], onTarget:0, total:0 };
+    if (!isNaN(r.dev)) byMonth[m].devs.push(r.dev);
+    if (r.status.indexOf('On Target') >= 0) byMonth[m].onTarget++;
+    byMonth[m].total++;
+  });
+  var monthSummary = Object.keys(byMonth).sort().map(function(m) {
+    var d = byMonth[m];
+    var avgDev = d.devs.length ? (d.devs.reduce(function(a,b){return a+b;},0)/d.devs.length).toFixed(1) : 'N/A';
+    var pct = d.total ? Math.round(d.onTarget/d.total*100) : 0;
+    return m+': OnTarget='+pct+'%, AvgDeviasi='+avgDev+'mnt';
+  }).join('\n');
+
+  var totalRows = data.length;
+  var onTargetAll = data.filter(function(r){return r.status.indexOf('On Target')>=0;}).length;
+  var overTargetAll = data.filter(function(r){return r.status.indexOf('Over Target')>=0;}).length;
+  var pctAll = Math.round(onTargetAll/totalRows*100);
+
+  var filterInfo = 'Filter aktif: JNS_LOAD=' + DS.tab0.filters.jns + ', Kendaraan=' + DS.tab0.filters.kend;
+
+  // loading vs unloading breakdown
+  var byJns = {};
+  data.forEach(function(r) {
+    if (!r.jns) return;
+    if (!byJns[r.jns]) byJns[r.jns] = { avgs:[], devs:[], onTarget:0, toleransi:0, over:0, total:0, trucks:0 };
+    if (!isNaN(r.avg)) byJns[r.jns].avgs.push(r.avg);
+    if (!isNaN(r.dev)) byJns[r.jns].devs.push(r.dev);
+    if (r.status.indexOf('On Target') >= 0) byJns[r.jns].onTarget++;
+    else if (r.status.indexOf('Toleransi') >= 0) byJns[r.jns].toleransi++;
+    else if (r.status.indexOf('Over Target') >= 0) byJns[r.jns].over++;
+    byJns[r.jns].total++;
+    byJns[r.jns].trucks += r.truck;
+  });
+  var jnsSummary = Object.keys(byJns).map(function(j) {
+    var d = byJns[j];
+    var avg = d.avgs.length ? (d.avgs.reduce(function(a,b){return a+b;},0)/d.avgs.length).toFixed(1) : 'N/A';
+    var avgDev = d.devs.length ? (d.devs.reduce(function(a,b){return a+b;},0)/d.devs.length).toFixed(1) : 'N/A';
+    return j+': AvgWaktu='+avg+'mnt, AvgDeviasi='+avgDev+'mnt, OnTarget='+d.onTarget+', Toleransi='+d.toleransi+', OverTarget='+d.over+', TotalTruck='+d.trucks;
+  }).join('\n');
+
+  // worst and best kendaraan
+  var kendArr = Object.keys(byKend).sort(function(a,b){return parseInt(a)-parseInt(b);});
+  var bestKend = kendArr.reduce(function(best, k) {
+    var d = byKend[k]; if (!d.devs.length) return best;
+    var avg = d.devs.reduce(function(a,b){return a+b;},0)/d.devs.length;
+    if (!best || avg < byKend[best].devs.reduce(function(a,b){return a+b;},0)/byKend[best].devs.length) return k;
+    return best;
+  }, null);
+  var worstKend = kendArr.reduce(function(worst, k) {
+    var d = byKend[k]; if (!d.devs.length) return worst;
+    var avg = d.devs.reduce(function(a,b){return a+b;},0)/d.devs.length;
+    if (!worst || avg > byKend[worst].devs.reduce(function(a,b){return a+b;},0)/byKend[worst].devs.length) return k;
+    return worst;
+  }, null);
+
+  // best and worst month
+  var monthArr = Object.keys(byMonth).sort();
+  var bestMonth = monthArr.reduce(function(best, m) {
+    var d = byMonth[m]; var pct = d.total ? d.onTarget/d.total : 0;
+    if (!best || pct > (byMonth[best].onTarget/byMonth[best].total)) return m;
+    return best;
+  }, null);
+  var worstMonth = monthArr.reduce(function(worst, m) {
+    var d = byMonth[m]; var pct = d.total ? d.onTarget/d.total : 1;
+    if (!worst || pct < (byMonth[worst].onTarget/byMonth[worst].total)) return m;
+    return worst;
+  }, null);
+
+  // trend last 3 months
+  var last3 = monthArr.slice(-3).map(function(m) {
+    var d = byMonth[m];
+    var pct = d.total ? Math.round(d.onTarget/d.total*100) : 0;
+    var avgDev = d.devs.length ? (d.devs.reduce(function(a,b){return a+b;},0)/d.devs.length).toFixed(1) : 'N/A';
+    return m+': OnTarget='+pct+'%, AvgDeviasi='+avgDev+'mnt';
+  }).join(' | ');
+
+  var toleransiAll = data.filter(function(r){return r.status.indexOf('Toleransi')>=0;}).length;
+
+  var prompt = `Kamu adalah analis operasional logistik senior di perusahaan distribusi Indonesia. Tugas kamu adalah membuat laporan analisa mendalam berdasarkan data aktual yang diberikan.
+
+DATA ANALISIS WAKTU LOADING VS TARGET PER JENIS KENDARAAN:
+
+RINGKASAN UMUM:
+- Total data: ${totalRows} baris | Periode: ${monthArr[0]} s/d ${monthArr[monthArr.length-1]}
+- On Target: ${onTargetAll} (${pctAll}%) | Toleransi: ${toleransiAll} (${Math.round(toleransiAll/totalRows*100)}%) | Over Target: ${overTargetAll} (${Math.round(overTargetAll/totalRows*100)}%)
+- Filter aktif: JNS_LOAD=${DS.tab0.filters.jns}, Kendaraan=${DS.tab0.filters.kend}
+
+BREAKDOWN PER JENIS KENDARAAN (target masing-masing: 2T=45mnt, 4T=60mnt, 10T=90mnt, 15T=110mnt, 20T=120mnt, 40T=150mnt):
+${kendSummary}
+
+BREAKDOWN LOADING vs UNLOADING:
+${jnsSummary}
+
+TREN BULANAN (${monthArr.length} bulan):
+${monthSummary}
+
+BULAN TERBAIK: ${bestMonth} | BULAN TERBURUK: ${worstMonth}
+KENDARAAN PALING EFISIEN: ${bestKend} ton | KENDARAAN PALING BERMASALAH: ${worstKend} ton
+TREN 3 BULAN TERAKHIR: ${last3}
+
+Buatkan laporan analisa LENGKAP dan MENDALAM dalam format PERSIS berikut. Setiap bagian minimal 5-7 kalimat dengan angka spesifik dari data. Bahasa Indonesia profesional:
+
+[PERFORMA KESELURUHAN]
+(Analisa mendalam performa keseluruhan: tingkat kepatuhan target, perbandingan on target vs toleransi vs over target, breakdown loading vs unloading, gambaran umum kondisi operasional, apakah performa secara keseluruhan baik atau perlu perhatian, dan konteks periode data)
+
+[KENDARAAN TERBAIK & TERBURUK]
+(Analisa mendalam per jenis kendaraan: sebutkan kendaraan paling efisien beserta angka deviasi dan persentase on target-nya, kendaraan paling bermasalah beserta angka konkret, perbandingan antar kendaraan, apakah ada pola tertentu pada kendaraan besar vs kecil, dan dampak operasional dari kendaraan yang sering over target)
+
+[TREN BULANAN]
+(Analisa mendalam tren: identifikasi bulan terbaik dan terburuk beserta angkanya, pola naik/turun sepanjang periode, apakah ada pola musiman atau periode kritis tertentu, perubahan signifikan antar bulan, dan bagaimana tren 3 bulan terakhir dibanding awal periode)
+
+[REKOMENDASI & PROYEKSI]
+(Rekomendasi spesifik dan actionable: minimal 3 rekomendasi konkret berdasarkan data, fokus pada kendaraan dan bulan bermasalah, proyeksi tren bulan depan berdasarkan pola historis 3 bulan terakhir, early warning jika ada kendaraan atau periode yang berisiko, dan prioritas tindakan yang harus dilakukan segera)
+
+PENTING: Gunakan angka spesifik dari data di setiap kalimat. Jangan buat analisa generik. Setiap paragraf harus informatif dan actionable.`;
 
   var models = [
     'meta-llama/llama-3.3-70b-instruct:free',
@@ -260,52 +581,71 @@ async function generateSummary() {
     'openrouter/free'
   ];
 
-  var lastError = null;
-  var text = null;
-
+  var text = null, lastErr = null;
   for (var i = 0; i < models.length; i++) {
     try {
       var res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + apiKey,
-          'HTTP-Referer': 'https://arvanaryanto-ms.github.io',
-          'X-Title': 'Dashboard Shift'
-        },
-        body: JSON.stringify({
-          model: models[i],
-          max_tokens: 500,
-          messages: [{ role: 'user', content: prompt }]
-        })
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey, 'HTTP-Referer': 'https://arvanaryanto-ms.github.io', 'X-Title': 'Dashboard Logistik' },
+        body: JSON.stringify({ model: models[i], max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
       });
-      var data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      var candidate = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : null;
-      if (candidate) { text = candidate; break; }
-      throw new Error('Empty response');
-    } catch(e) {
-      lastError = e;
-    }
+      var json = await res.json();
+      if (json.error) throw new Error(json.error.message);
+      var c = json.choices && json.choices[0] && json.choices[0].message ? json.choices[0].message.content : null;
+      if (c) { text = c; break; }
+      throw new Error('Empty');
+    } catch(e) { lastErr = e; }
   }
 
-  try {
-    if (text) {
-      document.getElementById('ai-result').textContent = text;
-      document.getElementById('ai-result').classList.remove('hidden');
-      btn.textContent = '🔄 REGENERATE';
-    } else {
-      throw lastError || new Error('Semua model gagal.');
-    }
-  } catch(e) {
-    document.getElementById('ai-result').textContent = 'Error: ' + e.message;
-    document.getElementById('ai-result').classList.remove('hidden');
-    btn.textContent = '✨ GENERATE AI SUMMARY';
-  } finally {
-    document.getElementById('ai-loading').classList.add('hidden');
-    btn.disabled = false;
+  document.getElementById('ai-ld-0').classList.add('hidden');
+
+  if (text) {
+    renderAIResult(text);
+    btn.textContent = 'REGENERATE';
+  } else {
+    document.getElementById('ai-result-0').innerHTML = '<div style="padding:20px 24px;color:#f87171;font-size:12px;">Error: ' + (lastErr ? lastErr.message : 'Semua model gagal.') + '</div>';
+    btn.textContent = 'GENERATE ANALISA';
   }
+  btn.disabled = false;
 }
+
+function renderAIResult(text) {
+  var sections = [
+    { key: '[PERFORMA KESELURUHAN]', label: 'PERFORMA KESELURUHAN' },
+    { key: '[KENDARAAN TERBAIK & TERBURUK]', label: 'KENDARAAN TERBAIK & TERBURUK' },
+    { key: '[TREN BULANAN]', label: 'TREN BULANAN' },
+    { key: '[REKOMENDASI & PROYEKSI]', label: 'REKOMENDASI & PROYEKSI' }
+  ];
+
+  var html = '';
+  sections.forEach(function(sec, idx) {
+    var start = text.indexOf(sec.key);
+    if (start === -1) return;
+    var end = -1;
+    for (var i = idx + 1; i < sections.length; i++) {
+      var ni = text.indexOf(sections[i].key);
+      if (ni > -1) { end = ni; break; }
+    }
+    var content = end > -1 ? text.substring(start + sec.key.length, end) : text.substring(start + sec.key.length);
+    content = content.trim();
+    if (content) {
+      html += '<div class="ai-block"><div class="ai-block-title">' + sec.label + '</div><div class="ai-block-text">' + content + '</div></div>';
+    }
+  });
+
+  // fallback jika format tidak sesuai
+  if (!html) {
+    html = '<div class="ai-block"><div class="ai-block-title">HASIL ANALISA</div><div class="ai-block-text">' + text + '</div></div>';
+  }
+
+  document.getElementById('ai-result-0').innerHTML = html;
+}
+
+// init
+window.onload = function() {
+  var k = sessionStorage.getItem('or_key');
+  if (k) { document.getElementById('api-key').value = k; document.getElementById('key-ok').style.display = 'inline'; }
+};
 </script>
 </body>
 </html>
