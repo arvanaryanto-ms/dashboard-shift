@@ -253,27 +253,50 @@ async function generateSummary() {
 
   var prompt = 'Kamu adalah analis operasional logistik. Berikut data Performance Planning & Realisasi Shift:\n\n' + dataText + '\n\nBuatkan summary analisa dalam 1 paragraf singkat (3-5 kalimat) dalam Bahasa Indonesia yang mencakup:\n1. Tren umum kepatuhan planning shift\n2. Bulan terbaik dan terburuk\n3. Rekomendasi singkat untuk perbaikan\n\nGunakan bahasa profesional dan langsung to the point.';
 
+  var models = [
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'openai/gpt-oss-20b:free',
+    'mistralai/mistral-small-3.1-24b-instruct:free',
+    'openrouter/free'
+  ];
+
+  var lastError = null;
+  var text = null;
+
+  for (var i = 0; i < models.length; i++) {
+    try {
+      var res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + apiKey,
+          'HTTP-Referer': 'https://arvanaryanto-ms.github.io',
+          'X-Title': 'Dashboard Shift'
+        },
+        body: JSON.stringify({
+          model: models[i],
+          max_tokens: 500,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      var data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      var candidate = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : null;
+      if (candidate) { text = candidate; break; }
+      throw new Error('Empty response');
+    } catch(e) {
+      lastError = e;
+    }
+  }
+
   try {
-    var res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-        'HTTP-Referer': 'https://arvanaryanto-ms.github.io',
-        'X-Title': 'Dashboard Shift'
-      },
-      body: JSON.stringify({
-        model: 'meta-llama/llama-3.2-3b-instruct:free',
-        max_tokens: 500,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    var data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    var text = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : 'Gagal menghasilkan analisa.';
-    document.getElementById('ai-result').textContent = text;
-    document.getElementById('ai-result').classList.remove('hidden');
-    btn.textContent = '🔄 REGENERATE';
+    if (text) {
+      document.getElementById('ai-result').textContent = text;
+      document.getElementById('ai-result').classList.remove('hidden');
+      btn.textContent = '🔄 REGENERATE';
+    } else {
+      throw lastError || new Error('Semua model gagal.');
+    }
   } catch(e) {
     document.getElementById('ai-result').textContent = 'Error: ' + e.message;
     document.getElementById('ai-result').classList.remove('hidden');
