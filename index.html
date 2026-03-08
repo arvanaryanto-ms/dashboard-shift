@@ -121,7 +121,7 @@ td{padding:9px 14px;white-space:nowrap;}
 <div class="header">
   <div class="header-left">
     <div class="label">OPERATIONAL ANALYTICS DASHBOARD</div>
-    <h1>Logistik & Warehouse</h1>
+    <h1>Performance Planning & Realisasi Shift</h1>
   </div>
   <div class="header-right">
     <input type="password" class="api-input" id="api-key" placeholder="OpenRouter API Key (sk-or-v1-...)" oninput="document.getElementById('key-ok').style.display='none'"/>
@@ -133,9 +133,6 @@ td{padding:9px 14px;white-space:nowrap;}
 <!-- MAIN TABS -->
 <div class="main-tabs">
   <div class="main-tab active" onclick="switchTab(0)">ANALISIS LOADING VS TARGET</div>
-  <div class="main-tab" onclick="switchTab(1)">TRAFFIC IN-OUT HARIAN</div>
-  <div class="main-tab" onclick="switchTab(2)">PERFORMANCE PLANNING</div>
-  <div class="main-tab" onclick="switchTab(3)">ANALISA AI GABUNGAN</div>
 </div>
 
 <!-- =================== TAB 0: LOADING VS TARGET =================== -->
@@ -150,7 +147,7 @@ td{padding:9px 14px;white-space:nowrap;}
       <input type="file" id="fi-0" accept=".csv" style="display:none" onchange="readCSV(this,'tab0')"/>
       <button class="btn-dl-template" onclick="event.stopPropagation();dlTemplate()">↓ DOWNLOAD TEMPLATE</button>
       <div class="upload-icon">📦</div>
-      <div class="upload-label" id="uz-0-title">Upload CSV — Analisis Waktu Loading vs Target</div>
+      <div class="upload-label" id="uz-0-title">Upload CSV — Performance Planning vs Realisasi Shift</div>
       <div class="upload-hint" id="uz-0-sub">Drag & drop atau klik · Export dari Metabase · Query: Analisis Waktu Loading vs Target per Jenis Kendaraan</div>
       <div class="err-msg hidden" id="uz-0-err"></div>
     </div>
