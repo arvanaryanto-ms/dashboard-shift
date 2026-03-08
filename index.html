@@ -6,6 +6,7 @@
 <title>Performance Planning & Realisasi Shift</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -418,12 +419,29 @@ function renderAI(text){
 }
 
 
-function downloadExcel(){
+async function downloadExcel(){
+  var btn = document.getElementById('btn-excel');
+  btn.textContent = '⏳ MENYIAPKAN...';
+  btn.disabled = true;
+
   var wb = XLSX.utils.book_new();
   var now = new Date();
   var tglGenerate = now.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})+' '+now.toLocaleTimeString('id-ID');
 
-  // ---- SHEET 1: LAPORAN LENGKAP ----
+  // ---- CAPTURE CARDS AS IMAGE ----
+  var cardsEl = document.getElementById('cards');
+  var cardsImgData = null;
+  try {
+    var canvas = await html2canvas(cardsEl, {
+      backgroundColor: '#07090f',
+      scale: 2,
+      useCORS: true,
+      logging: false
+    });
+    cardsImgData = canvas.toDataURL('image/png').split(',')[1];
+  } catch(e) { cardsImgData = null; }
+
+  // ---- SHEET: LAPORAN LENGKAP ----
   var wsData = [];
 
   // JUDUL
@@ -432,28 +450,11 @@ function downloadExcel(){
   wsData.push(['Tanggal Generate: '+tglGenerate]);
   wsData.push([]);
 
-  // STATS CARDS
-  var pcts = RAW.map(function(r){return r.pct;});
-  var avg  = pcts.length?(pcts.reduce(function(a,b){return a+b;},0)/pcts.length).toFixed(2):0;
-  var best = pcts.length?Math.max.apply(null,pcts):0;
-  var worst= pcts.length?Math.min.apply(null,pcts):0;
-  var bestM = RAW.find(function(r){return r.pct===best;});
-  var worstM= RAW.find(function(r){return r.pct===worst;});
-  var baik  = RAW.filter(function(r){return r.pct>=75;}).length;
-  var cukup = RAW.filter(function(r){return r.pct>=50&&r.pct<75;}).length;
-  var buruk = RAW.filter(function(r){return r.pct<50;}).length;
-  var totalSesuai = RAW.reduce(function(a,r){return a+r.sesuai;},0);
-  var totalAll    = RAW.reduce(function(a,r){return a+r.total;},0);
-
-  wsData.push(['RINGKASAN STATISTIK']);
-  wsData.push(['Metrik','Nilai','Keterangan']);
-  wsData.push(['Rata-rata Kepatuhan', avg+'%', RAW.length+' bulan data']);
-  wsData.push(['Terbaik', best+'%', bestM?bestM.month:'-']);
-  wsData.push(['Terburuk', worst+'%', worstM?worstM.month:'-']);
-  wsData.push(['Status Baik (≥75%)', baik+' bulan', '']);
-  wsData.push(['Status Cukup (50-74%)', cukup+' bulan', '']);
-  wsData.push(['Status Buruk (<50%)', buruk+' bulan', '']);
-  wsData.push(['Total Realisasi Sesuai', totalSesuai.toLocaleString(), 'dari '+totalAll.toLocaleString()+' total']);
+  // placeholder rows for cards image (10 rows height)
+  var cardsStartRow = wsData.length;
+  if(cardsImgData){
+    for(var i=0;i<12;i++) wsData.push(['']);
+  }
   wsData.push([]);
 
   // DATA TABEL
@@ -481,14 +482,29 @@ function downloadExcel(){
   }
 
   var ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // column width
   ws['!cols'] = [{wch:30},{wch:20},{wch:25},{wch:15},{wch:15},{wch:10},{wch:15},{wch:15}];
+
+  // INSERT CARDS IMAGE into sheet
+  if(cardsImgData){
+    if(!wb.Workbook) wb.Workbook = {};
+    if(!wb.Workbook.Sheets) wb.Workbook.Sheets = [];
+    if(!ws['!images']) ws['!images'] = [];
+    ws['!images'].push({
+      name: 'cards.png',
+      data: cardsImgData,
+      opts: { base64: true },
+      tl: { col: 0, row: cardsStartRow },
+      br: { col: 7, row: cardsStartRow + 11 }
+    });
+  }
 
   XLSX.utils.book_append_sheet(wb, ws, 'Laporan');
 
   var fname = 'Performance_Planning_Shift_'+now.getFullYear()+('0'+(now.getMonth()+1)).slice(-2)+('0'+now.getDate()).slice(-2)+'.xlsx';
   XLSX.writeFile(wb, fname);
+
+  btn.textContent = '↓ DOWNLOAD EXCEL';
+  btn.disabled = false;
 }
 
 window.onload=function(){
