@@ -47,6 +47,7 @@
   .ai-wrap { background: #0f1624; border: 1px solid #1e3a5f; border-radius: 8px; overflow: hidden; }
   .ai-header { padding: 14px 20px; border-bottom: 1px solid #1e3a5f; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
   .ai-title { font-size: 11px; color: #4a9eff; letter-spacing: 2px; }
+  .ai-badge { font-size: 10px; color: #22c55e; background: #14532d; padding: 2px 8px; border-radius: 4px; }
   .ai-btn { background: #1d4ed8; color: #fff; border: none; border-radius: 6px; padding: 6px 16px; font-size: 11px; cursor: pointer; letter-spacing: 1px; font-family: 'IBM Plex Mono', monospace; transition: background 0.2s; }
   .ai-btn:hover { background: #1e40af; }
   .ai-btn:disabled { background: #1e3a5f; color: #64748b; cursor: not-allowed; }
@@ -127,17 +128,20 @@
 
   <div class="ai-wrap">
     <div class="ai-header">
-      <div class="ai-title">🤖 AI SUMMARY ANALISA</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="ai-title">🤖 AI SUMMARY ANALISA</div>
+        <span class="ai-badge">✅ GRATIS · Groq Llama</span>
+      </div>
       <button class="ai-btn" id="ai-btn" onclick="generateSummary()">✨ GENERATE AI SUMMARY</button>
     </div>
     <div class="ai-key-wrap">
-      <span class="ai-key-label">🔑 Anthropic API Key:</span>
-      <input type="password" class="ai-key-input" id="api-key-input" placeholder="sk-ant-api03-..."/>
+      <span class="ai-key-label">🔑 Groq API Key:</span>
+      <input type="password" class="ai-key-input" id="api-key-input" placeholder="gsk_..."/>
       <button class="ai-key-save" onclick="saveKey()">Simpan</button>
       <span class="key-saved hidden" id="key-saved">✅ Tersimpan</span>
     </div>
     <div class="ai-body">
-      <div class="ai-placeholder" id="ai-placeholder">Masukkan Anthropic API Key lalu klik "Generate AI Summary".</div>
+      <div class="ai-placeholder" id="ai-placeholder">Masukkan Groq API Key (gratis) lalu klik "Generate AI Summary".<br><span style="font-size:11px;color:#1e3a5f">Daftar gratis di console.groq.com → API Keys → Create Key</span></div>
       <div class="ai-loading hidden" id="ai-loading"><div class="spinner"></div><span>AI sedang menganalisa data...</span></div>
       <div class="ai-result hidden" id="ai-result"></div>
     </div>
@@ -237,7 +241,7 @@ function renderDashboard() {
 }
 
 async function generateSummary() {
-  if (!apiKey) { alert('Masukkan Anthropic API Key terlebih dahulu!'); return; }
+  if (!apiKey) { alert('Masukkan Groq API Key terlebih dahulu!'); return; }
   const btn = document.getElementById('ai-btn');
   btn.disabled = true;
   btn.textContent = '⏳ GENERATING...';
@@ -252,23 +256,21 @@ async function generateSummary() {
   const prompt = `Kamu adalah analis operasional logistik. Berikut data Performance Planning & Realisasi Shift:\n\n${dataText}\n\nBuatkan summary analisa dalam 1 paragraf singkat (3-5 kalimat) dalam Bahasa Indonesia yang mencakup:\n1. Tren umum kepatuhan planning shift\n2. Bulan terbaik dan terburuk\n3. Rekomendasi singkat untuk perbaikan\n\nGunakan bahasa profesional dan langsung to the point.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser': 'true'
+        'Authorization': 'Bearer ' + apiKey
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'llama-3.3-70b-versatile',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
-    const text = data.content?.map(c => c.text || '').join('') || 'Gagal menghasilkan analisa.';
+    const text = data.choices?.[0]?.message?.content || 'Gagal menghasilkan analisa.';
     document.getElementById('ai-result').textContent = text;
     document.getElementById('ai-result').classList.remove('hidden');
     btn.textContent = '🔄 REGENERATE';
