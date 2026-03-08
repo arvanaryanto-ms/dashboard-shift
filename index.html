@@ -58,6 +58,8 @@
   .ai-key-save { background: #0f2a4a; color: #4a9eff; border: 1px solid #1e3a5f; border-radius: 6px; padding: 6px 12px; font-size: 11px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; white-space: nowrap; }
   .ai-key-save:hover { background: #1e3a5f; }
   .key-saved { color: #22c55e; font-size: 11px; }
+  .ai-note { font-size: 10px; color: #475569; padding: 8px 20px; border-bottom: 1px solid #1e3a5f; background: #0a0e1a; }
+  .ai-note a { color: #4a9eff; text-decoration: none; }
   .ai-body { padding: 20px 24px; min-height: 80px; }
   .ai-placeholder { color: #334155; font-size: 13px; font-style: italic; }
   .ai-loading { display: flex; align-items: center; gap: 12px; color: #4a9eff; font-size: 13px; }
@@ -130,20 +132,22 @@
     <div class="ai-header">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="ai-title">🤖 AI SUMMARY ANALISA</div>
-        <span class="ai-badge">✅ GRATIS · Gemini 1.5 Flash</span>
+        <span class="ai-badge">✅ GRATIS · OpenRouter</span>
       </div>
       <button class="ai-btn" id="ai-btn" onclick="generateSummary()">✨ GENERATE AI SUMMARY</button>
     </div>
+    <div class="ai-note">
+      🔗 Daftar gratis di <a href="https://openrouter.ai" target="_blank">openrouter.ai</a> → Keys → Create Key · Pilih model gratis seperti <strong>Llama 3</strong>
+    </div>
     <div class="ai-key-wrap">
-      <span class="ai-key-label">🔑 Gemini API Key:</span>
-      <input type="password" class="ai-key-input" id="api-key-input" placeholder="AIza..."/>
+      <span class="ai-key-label">🔑 OpenRouter API Key:</span>
+      <input type="password" class="ai-key-input" id="api-key-input" placeholder="sk-or-v1-..."/>
       <button class="ai-key-save" onclick="saveKey()">Simpan</button>
       <span class="key-saved hidden" id="key-saved">✅ Tersimpan</span>
     </div>
     <div class="ai-body">
       <div class="ai-placeholder" id="ai-placeholder">
-        Masukkan Gemini API Key (gratis) lalu klik "Generate AI Summary".<br>
-        <span style="font-size:11px;color:#334155">Daftar gratis di aistudio.google.com → Get API Key → Create API Key</span>
+        Masukkan OpenRouter API Key lalu klik "Generate AI Summary".
       </div>
       <div class="ai-loading hidden" id="ai-loading"><div class="spinner"></div><span>AI sedang menganalisa data...</span></div>
       <div class="ai-result hidden" id="ai-result"></div>
@@ -159,7 +163,7 @@ function saveKey() {
   apiKey = document.getElementById('api-key-input').value.trim();
   if (apiKey) {
     document.getElementById('key-saved').classList.remove('hidden');
-    setTimeout(() => document.getElementById('key-saved').classList.add('hidden'), 2000);
+    setTimeout(function() { document.getElementById('key-saved').classList.add('hidden'); }, 2000);
   }
 }
 
@@ -174,9 +178,9 @@ function handleFile(file) {
     header: true, skipEmptyLines: true,
     complete: function(result) {
       try {
-        csvData = result.data.map(row => {
-          const pctRaw = row['Pct_Sesuai'] || row['pct_sesuai'] || '0';
-          const pctNum = parseFloat(pctRaw.toString().replace('%','')) || 0;
+        csvData = result.data.map(function(row) {
+          var pctRaw = row['Pct_Sesuai'] || row['pct_sesuai'] || '0';
+          var pctNum = parseFloat(pctRaw.toString().replace('%','')) || 0;
           return {
             month: row['Month'] || row['month'] || '',
             sesuai: parseInt((row['Realisasi_Sesuai'] || row['realisasi_sesuai'] || '0').toString().replace(/,/g,'')) || 0,
@@ -187,7 +191,7 @@ function handleFile(file) {
             mom: row['MoM_Change'] || row['mom_change'] || '-',
             status: row['Status'] || row['status'] || '-',
           };
-        }).filter(r => r.month !== '');
+        }).filter(function(r) { return r.month !== ''; });
         document.getElementById('upload-idle').classList.add('hidden');
         document.getElementById('upload-done').classList.remove('hidden');
         document.getElementById('upload-area').classList.add('loaded');
@@ -197,22 +201,22 @@ function handleFile(file) {
         renderDashboard();
       } catch(e) { showError('Format CSV tidak sesuai.'); }
     },
-    error: () => showError('Gagal membaca file CSV.')
+    error: function() { showError('Gagal membaca file CSV.'); }
   });
 }
 
 function showError(msg) {
-  const el = document.getElementById('error-msg');
+  var el = document.getElementById('error-msg');
   el.textContent = msg;
   el.classList.remove('hidden');
 }
 
 function renderDashboard() {
-  const sorted = [...csvData].sort((a,b) => b.pct - a.pct);
-  const best = sorted[0];
-  const worst = sorted[sorted.length-1];
-  const avg = (csvData.reduce((s,d) => s+d.pct, 0) / csvData.length).toFixed(2);
-  const months = csvData.map(d => d.month).sort();
+  var sorted = csvData.slice().sort(function(a,b) { return b.pct - a.pct; });
+  var best = sorted[0];
+  var worst = sorted[sorted.length-1];
+  var avg = (csvData.reduce(function(s,d) { return s+d.pct; }, 0) / csvData.length).toFixed(2);
+  var months = csvData.map(function(d) { return d.month; }).sort();
   document.getElementById('header-sub').textContent = csvData.length + ' Bulan Berjalan · ' + months[0] + ' — ' + months[months.length-1];
   document.getElementById('avg-pct').textContent = avg + '%';
   document.getElementById('avg-sub').textContent = 'Rata-rata ' + csvData.length + ' bulan';
@@ -221,11 +225,11 @@ function renderDashboard() {
   document.getElementById('worst-month').textContent = worst.month;
   document.getElementById('worst-sub').textContent = worst.pct + '% kepatuhan';
   document.getElementById('table-label').textContent = 'DATA ' + csvData.length + ' BULAN · URUT PCT TERTINGGI';
-  const tbody = document.getElementById('table-body');
+  var tbody = document.getElementById('table-body');
   tbody.innerHTML = '';
   sorted.forEach(function(row) {
-    const bc = row.pct >= 75 ? 'badge-baik' : row.pct >= 50 ? 'badge-cukup' : 'badge-buruk';
-    const mc = row.mom && row.mom.startsWith('+') ? '#22c55e' : row.mom === '-' ? '#64748b' : '#f87171';
+    var bc = row.pct >= 75 ? 'badge-baik' : row.pct >= 50 ? 'badge-cukup' : 'badge-buruk';
+    var mc = row.mom && row.mom.startsWith('+') ? '#22c55e' : row.mom === '-' ? '#64748b' : '#f87171';
     tbody.innerHTML += '<tr><td class="td-month">' + row.month + '</td><td class="td-sesuai">' + row.sesuai.toLocaleString() + '</td><td class="td-tidak">' + row.tidak.toLocaleString() + '</td><td class="td-total">' + row.total.toLocaleString() + '</td><td><span class="badge ' + bc + '">' + row.pct + '%</span></td><td style="font-size:16px">' + row.trend + '</td><td style="color:' + mc + '">' + row.mom + '</td><td>' + row.status + '</td></tr>';
   });
   document.getElementById('dashboard').classList.remove('hidden');
@@ -235,32 +239,38 @@ function renderDashboard() {
 }
 
 async function generateSummary() {
-  if (!apiKey) { alert('Masukkan Gemini API Key terlebih dahulu!'); return; }
-  const btn = document.getElementById('ai-btn');
+  if (!apiKey) { alert('Masukkan OpenRouter API Key terlebih dahulu!'); return; }
+  var btn = document.getElementById('ai-btn');
   btn.disabled = true;
   btn.textContent = '⏳ GENERATING...';
   document.getElementById('ai-placeholder').classList.add('hidden');
   document.getElementById('ai-result').classList.add('hidden');
   document.getElementById('ai-loading').classList.remove('hidden');
 
-  const dataText = csvData.map(function(d) {
+  var dataText = csvData.map(function(d) {
     return d.month + ': Sesuai=' + d.sesuai + ', TidakSesuai=' + d.tidak + ', Total=' + d.total + ', Pct=' + d.pct + '%, Trend=' + d.trend + ', MoM=' + d.mom + ', Status=' + d.status;
   }).join('\n');
 
-  const prompt = 'Kamu adalah analis operasional logistik. Berikut data Performance Planning & Realisasi Shift:\n\n' + dataText + '\n\nBuatkan summary analisa dalam 1 paragraf singkat (3-5 kalimat) dalam Bahasa Indonesia yang mencakup:\n1. Tren umum kepatuhan planning shift\n2. Bulan terbaik dan terburuk\n3. Rekomendasi singkat untuk perbaikan\n\nGunakan bahasa profesional dan langsung to the point.';
+  var prompt = 'Kamu adalah analis operasional logistik. Berikut data Performance Planning & Realisasi Shift:\n\n' + dataText + '\n\nBuatkan summary analisa dalam 1 paragraf singkat (3-5 kalimat) dalam Bahasa Indonesia yang mencakup:\n1. Tren umum kepatuhan planning shift\n2. Bulan terbaik dan terburuk\n3. Rekomendasi singkat untuk perbaikan\n\nGunakan bahasa profesional dan langsung to the point.';
 
   try {
-    const res = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=' + apiKey,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-      }
-    );
-    const data = await res.json();
+    var res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey,
+        'HTTP-Referer': 'https://arvanaryanto-ms.github.io',
+        'X-Title': 'Dashboard Shift'
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        max_tokens: 500,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    var data = await res.json();
     if (data.error) throw new Error(data.error.message);
-    const text = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : 'Gagal menghasilkan analisa.';
+    var text = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : 'Gagal menghasilkan analisa.';
     document.getElementById('ai-result').textContent = text;
     document.getElementById('ai-result').classList.remove('hidden');
     btn.textContent = '🔄 REGENERATE';
