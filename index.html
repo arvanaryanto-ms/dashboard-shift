@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Performance Planning & Realisasi Shift</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -64,8 +63,6 @@ td{padding:9px 14px;white-space:nowrap;}
 .btn-ai{background:#1d4ed8;color:#fff;border:none;border-radius:6px;padding:7px 18px;font-size:10px;cursor:pointer;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;transition:background 0.2s;font-weight:500;}
 .btn-ai:hover{background:#1e40af;}
 .btn-ai:disabled{background:#1a2744;color:#3d5070;cursor:not-allowed;}
-.btn-excel{background:#14532d;color:#22c55e;border:1px solid #22c55e44;border-radius:6px;padding:7px 18px;font-size:10px;cursor:pointer;letter-spacing:1px;font-family:"IBM Plex Mono",monospace;transition:background 0.2s;font-weight:500;display:none;}
-.btn-excel:hover{background:#166534;}
 .ai-block{padding:20px 24px;border-bottom:1px solid #0f1828;}
 .ai-block:last-child{border-bottom:none;}
 .ai-block-title{font-size:9px;color:#4a9eff;letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
@@ -130,7 +127,6 @@ td{padding:9px 14px;white-space:nowrap;}
       <div class="ai-controls">
         <span class="ai-free-badge">GRATIS · OpenRouter</span>
         <button class="btn-ai" id="ai-btn" onclick="generateAI()">GENERATE ANALISA</button>
-        <button class="btn-excel" id="btn-excel" onclick="downloadExcel()">↓ DOWNLOAD EXCEL</button>
       </div>
     </div>
     <div id="ai-body">
@@ -414,81 +410,6 @@ function renderAI(text){
   });
   if(!html) html='<div class="ai-block"><div class="ai-block-title">HASIL ANALISA</div><div class="ai-block-text">'+text+'</div></div>';
   document.getElementById('ai-result').innerHTML=html;
-  document.getElementById('btn-excel').style.display='inline';
-}
-
-
-function downloadExcel(){
-  var wb = XLSX.utils.book_new();
-  var now = new Date();
-  var tglGenerate = now.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})+' '+now.toLocaleTimeString('id-ID');
-
-  // ---- SHEET 1: LAPORAN LENGKAP ----
-  var wsData = [];
-
-  // JUDUL
-  wsData.push(['PERFORMANCE PLANNING & REALISASI SHIFT']);
-  wsData.push(['Operational Analytics Dashboard']);
-  wsData.push(['Tanggal Generate: '+tglGenerate]);
-  wsData.push([]);
-
-  // STATS CARDS
-  var pcts = RAW.map(function(r){return r.pct;});
-  var avg  = pcts.length?(pcts.reduce(function(a,b){return a+b;},0)/pcts.length).toFixed(2):0;
-  var best = pcts.length?Math.max.apply(null,pcts):0;
-  var worst= pcts.length?Math.min.apply(null,pcts):0;
-  var bestM = RAW.find(function(r){return r.pct===best;});
-  var worstM= RAW.find(function(r){return r.pct===worst;});
-  var baik  = RAW.filter(function(r){return r.pct>=75;}).length;
-  var cukup = RAW.filter(function(r){return r.pct>=50&&r.pct<75;}).length;
-  var buruk = RAW.filter(function(r){return r.pct<50;}).length;
-  var totalSesuai = RAW.reduce(function(a,r){return a+r.sesuai;},0);
-  var totalAll    = RAW.reduce(function(a,r){return a+r.total;},0);
-
-  wsData.push(['RINGKASAN STATISTIK']);
-  wsData.push(['Metrik','Nilai','Keterangan']);
-  wsData.push(['Rata-rata Kepatuhan', avg+'%', RAW.length+' bulan data']);
-  wsData.push(['Terbaik', best+'%', bestM?bestM.month:'-']);
-  wsData.push(['Terburuk', worst+'%', worstM?worstM.month:'-']);
-  wsData.push(['Status Baik (≥75%)', baik+' bulan', '']);
-  wsData.push(['Status Cukup (50-74%)', cukup+' bulan', '']);
-  wsData.push(['Status Buruk (<50%)', buruk+' bulan', '']);
-  wsData.push(['Total Realisasi Sesuai', totalSesuai.toLocaleString(), 'dari '+totalAll.toLocaleString()+' total']);
-  wsData.push([]);
-
-  // DATA TABEL
-  wsData.push(['DATA PLANNING & REALISASI SHIFT']);
-  wsData.push(['Bulan','Realisasi Sesuai','Realisasi Tidak Sesuai','Total','Pct Sesuai (%)','Trend','MoM Change','Status']);
-  RAW.forEach(function(r){
-    wsData.push([r.month, r.sesuai, r.tidak, r.total, r.pct+'%', r.trend, r.mom, r.status]);
-  });
-  wsData.push([]);
-
-  // ANALISA AI
-  var aiResult = document.getElementById('ai-result');
-  wsData.push(['ANALISA AI']);
-  if(aiResult && aiResult.innerHTML){
-    var blocks = aiResult.querySelectorAll('.ai-block');
-    blocks.forEach(function(block){
-      var title = block.querySelector('.ai-block-title');
-      var text  = block.querySelector('.ai-block-text');
-      if(title) wsData.push([title.textContent.trim()]);
-      if(text)  wsData.push([text.textContent.trim()]);
-      wsData.push([]);
-    });
-  } else {
-    wsData.push(['Analisa AI belum di-generate.']);
-  }
-
-  var ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // column width
-  ws['!cols'] = [{wch:30},{wch:20},{wch:25},{wch:15},{wch:15},{wch:10},{wch:15},{wch:15}];
-
-  XLSX.utils.book_append_sheet(wb, ws, 'Laporan');
-
-  var fname = 'Performance_Planning_Shift_'+now.getFullYear()+('0'+(now.getMonth()+1)).slice(-2)+('0'+now.getDate()).slice(-2)+'.xlsx';
-  XLSX.writeFile(wb, fname);
 }
 
 window.onload=function(){
