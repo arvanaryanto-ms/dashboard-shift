@@ -8,28 +8,12 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'IBM Plex Mono', monospace;
-    background: #0a0e1a;
-    min-height: 100vh;
-    color: #e2e8f0;
-    padding: 28px;
-  }
+  body { font-family: 'IBM Plex Mono', monospace; background: #0a0e1a; min-height: 100vh; color: #e2e8f0; padding: 28px; }
   .header { margin-bottom: 28px; border-bottom: 1px solid #1e3a5f; padding-bottom: 18px; }
   .header-label { font-size: 11px; color: #4a9eff; letter-spacing: 3px; margin-bottom: 8px; }
   .header h1 { font-size: 22px; font-weight: 600; color: #fff; letter-spacing: 1px; }
   .header-sub { font-size: 12px; color: #64748b; margin-top: 6px; }
-
-  .upload-area {
-    border: 2px dashed #1e3a5f;
-    border-radius: 10px;
-    padding: 28px;
-    text-align: center;
-    cursor: pointer;
-    margin-bottom: 28px;
-    background: #0f1624;
-    transition: all 0.2s;
-  }
+  .upload-area { border: 2px dashed #1e3a5f; border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; margin-bottom: 28px; background: #0f1624; transition: all 0.2s; }
   .upload-area:hover { border-color: #4a9eff44; background: #111a2e; }
   .upload-area.loaded { border-color: #22c55e44; background: #0d1f12; }
   .upload-icon { font-size: 28px; margin-bottom: 10px; }
@@ -38,13 +22,11 @@
   .upload-success { color: #22c55e; font-size: 13px; font-weight: 500; }
   .upload-meta { color: #64748b; font-size: 11px; margin-top: 4px; }
   .error-msg { color: #f87171; font-size: 12px; margin-top: 10px; }
-
   .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
   .card { background: #0f1624; border-radius: 8px; padding: 16px 20px; }
   .card-label { font-size: 10px; color: #64748b; letter-spacing: 2px; margin-bottom: 8px; }
   .card-value { font-size: 24px; font-weight: 600; }
   .card-sub { font-size: 11px; color: #475569; margin-top: 4px; }
-
   .table-wrap { background: #0f1624; border: 1px solid #1e3a5f; border-radius: 8px; margin-bottom: 28px; overflow: hidden; }
   .table-header { padding: 14px 20px; border-bottom: 1px solid #1e3a5f; font-size: 11px; color: #4a9eff; letter-spacing: 2px; }
   .table-scroll { overflow-x: auto; }
@@ -58,47 +40,41 @@
   .td-sesuai { color: #22c55e; }
   .td-tidak { color: #f87171; }
   .td-total { color: #94a3b8; }
-  .td-trend { font-size: 16px; }
   .badge { padding: 2px 8px; border-radius: 4px; font-weight: 600; }
   .badge-baik { background: #14532d; color: #22c55e; }
   .badge-cukup { background: #713f12; color: #fbbf24; }
   .badge-buruk { background: #450a0a; color: #f87171; }
-
   .ai-wrap { background: #0f1624; border: 1px solid #1e3a5f; border-radius: 8px; overflow: hidden; }
-  .ai-header { padding: 14px 20px; border-bottom: 1px solid #1e3a5f; display: flex; justify-content: space-between; align-items: center; }
+  .ai-header { padding: 14px 20px; border-bottom: 1px solid #1e3a5f; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
   .ai-title { font-size: 11px; color: #4a9eff; letter-spacing: 2px; }
-  .ai-btn {
-    background: #1d4ed8; color: #fff; border: none; border-radius: 6px;
-    padding: 6px 16px; font-size: 11px; cursor: pointer;
-    letter-spacing: 1px; font-family: 'IBM Plex Mono', monospace; transition: background 0.2s;
-  }
+  .ai-btn { background: #1d4ed8; color: #fff; border: none; border-radius: 6px; padding: 6px 16px; font-size: 11px; cursor: pointer; letter-spacing: 1px; font-family: 'IBM Plex Mono', monospace; transition: background 0.2s; }
   .ai-btn:hover { background: #1e40af; }
   .ai-btn:disabled { background: #1e3a5f; color: #64748b; cursor: not-allowed; }
+  .ai-key-wrap { padding: 12px 20px; border-bottom: 1px solid #1e3a5f; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #0a0e1a; }
+  .ai-key-label { font-size: 11px; color: #64748b; white-space: nowrap; }
+  .ai-key-input { flex: 1; min-width: 200px; background: #0f1624; border: 1px solid #1e3a5f; border-radius: 6px; padding: 6px 12px; color: #e2e8f0; font-family: 'IBM Plex Mono', monospace; font-size: 11px; outline: none; }
+  .ai-key-input:focus { border-color: #4a9eff55; }
+  .ai-key-save { background: #0f2a4a; color: #4a9eff; border: 1px solid #1e3a5f; border-radius: 6px; padding: 6px 12px; font-size: 11px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; white-space: nowrap; }
+  .ai-key-save:hover { background: #1e3a5f; }
+  .key-saved { color: #22c55e; font-size: 11px; }
   .ai-body { padding: 20px 24px; min-height: 80px; }
   .ai-placeholder { color: #334155; font-size: 13px; font-style: italic; }
   .ai-loading { display: flex; align-items: center; gap: 12px; color: #4a9eff; font-size: 13px; }
-  .spinner {
-    width: 16px; height: 16px; border: 2px solid #1e3a5f;
-    border-top: 2px solid #4a9eff; border-radius: 50%;
-    animation: spin 1s linear infinite; flex-shrink: 0;
-  }
+  .spinner { width: 16px; height: 16px; border: 2px solid #1e3a5f; border-top: 2px solid #4a9eff; border-radius: 50%; animation: spin 1s linear infinite; flex-shrink: 0; }
   .ai-result { font-size: 14px; line-height: 1.8; color: #cbd5e1; font-family: 'IBM Plex Sans', sans-serif; font-weight: 300; }
   .hidden { display: none; }
-
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 600px) { .cards { grid-template-columns: 1fr; } body { padding: 16px; } }
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <div class="header">
   <div class="header-label">⚙️ PERFORMANCE DASHBOARD</div>
   <h1>Planning & Realisasi Shift</h1>
   <div class="header-sub" id="header-sub">10 Bulan Berjalan · Upload CSV dari Metabase</div>
 </div>
 
-<!-- Upload -->
 <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()"
   ondragover="event.preventDefault()" ondrop="handleDrop(event)">
   <input type="file" id="file-input" accept=".csv" style="display:none" onchange="handleFile(this.files[0])"/>
@@ -115,43 +91,33 @@
   <div class="error-msg hidden" id="error-msg"></div>
 </div>
 
-<!-- Dashboard (hidden until CSV loaded) -->
 <div id="dashboard" class="hidden">
-
-  <!-- Cards -->
   <div class="cards">
-    <div class="card" style="border: 1px solid #4a9eff22">
+    <div class="card" style="border:1px solid #4a9eff22">
       <div class="card-label">AVG Kepatuhan</div>
       <div class="card-value" id="avg-pct" style="color:#4a9eff">-</div>
       <div class="card-sub" id="avg-sub">Rata-rata bulan</div>
     </div>
-    <div class="card" style="border: 1px solid #22c55e22">
+    <div class="card" style="border:1px solid #22c55e22">
       <div class="card-label">🏆 Best Month</div>
       <div class="card-value" id="best-month" style="color:#22c55e">-</div>
       <div class="card-sub" id="best-sub">kepatuhan</div>
     </div>
-    <div class="card" style="border: 1px solid #f59e0b22">
+    <div class="card" style="border:1px solid #f59e0b22">
       <div class="card-label">⚠️ Worst Month</div>
       <div class="card-value" id="worst-month" style="color:#f59e0b">-</div>
       <div class="card-sub" id="worst-sub">kepatuhan</div>
     </div>
   </div>
 
-  <!-- Table -->
   <div class="table-wrap">
     <div class="table-header" id="table-label">DATA · URUT PCT TERTINGGI</div>
     <div class="table-scroll">
       <table>
         <thead>
           <tr>
-            <th>Month</th>
-            <th>Realisasi Sesuai</th>
-            <th>Tidak Sesuai</th>
-            <th>Total</th>
-            <th>Pct Sesuai</th>
-            <th>Trend</th>
-            <th>MoM Change</th>
-            <th>Status</th>
+            <th>Month</th><th>Realisasi Sesuai</th><th>Tidak Sesuai</th>
+            <th>Total</th><th>Pct Sesuai</th><th>Trend</th><th>MoM Change</th><th>Status</th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
@@ -159,38 +125,46 @@
     </div>
   </div>
 
-  <!-- AI Summary -->
   <div class="ai-wrap">
     <div class="ai-header">
       <div class="ai-title">🤖 AI SUMMARY ANALISA</div>
       <button class="ai-btn" id="ai-btn" onclick="generateSummary()">✨ GENERATE AI SUMMARY</button>
     </div>
+    <div class="ai-key-wrap">
+      <span class="ai-key-label">🔑 Anthropic API Key:</span>
+      <input type="password" class="ai-key-input" id="api-key-input" placeholder="sk-ant-api03-..."/>
+      <button class="ai-key-save" onclick="saveKey()">Simpan</button>
+      <span class="key-saved hidden" id="key-saved">✅ Tersimpan</span>
+    </div>
     <div class="ai-body">
-      <div class="ai-placeholder" id="ai-placeholder">Klik "Generate AI Summary" untuk analisa otomatis dari data yang diupload.</div>
-      <div class="ai-loading hidden" id="ai-loading">
-        <div class="spinner"></div>
-        <span>AI sedang menganalisa data...</span>
-      </div>
+      <div class="ai-placeholder" id="ai-placeholder">Masukkan Anthropic API Key lalu klik "Generate AI Summary".</div>
+      <div class="ai-loading hidden" id="ai-loading"><div class="spinner"></div><span>AI sedang menganalisa data...</span></div>
       <div class="ai-result hidden" id="ai-result"></div>
     </div>
   </div>
-
 </div>
 
 <script>
 let csvData = [];
+let apiKey = '';
+
+function saveKey() {
+  apiKey = document.getElementById('api-key-input').value.trim();
+  if (apiKey) {
+    document.getElementById('key-saved').classList.remove('hidden');
+    setTimeout(() => document.getElementById('key-saved').classList.add('hidden'), 2000);
+  }
+}
 
 function handleDrop(e) {
   e.preventDefault();
-  const file = e.dataTransfer.files[0];
-  if (file) handleFile(file);
+  handleFile(e.dataTransfer.files[0]);
 }
 
 function handleFile(file) {
   if (!file) return;
   Papa.parse(file, {
-    header: true,
-    skipEmptyLines: true,
+    header: true, skipEmptyLines: true,
     complete: function(result) {
       try {
         csvData = result.data.map(row => {
@@ -207,19 +181,14 @@ function handleFile(file) {
             status: row['Status'] || row['status'] || '-',
           };
         }).filter(r => r.month !== '');
-
-        // Update upload UI
         document.getElementById('upload-idle').classList.add('hidden');
         document.getElementById('upload-done').classList.remove('hidden');
         document.getElementById('upload-area').classList.add('loaded');
         document.getElementById('file-name').textContent = file.name;
         document.getElementById('file-meta').textContent = csvData.length + ' baris data berhasil dibaca · Klik untuk ganti file';
         document.getElementById('error-msg').classList.add('hidden');
-
         renderDashboard();
-      } catch(e) {
-        showError('Format CSV tidak sesuai. Pastikan export dari Metabase.');
-      }
+      } catch(e) { showError('Format CSV tidak sesuai.'); }
     },
     error: () => showError('Gagal membaca file CSV.')
   });
@@ -234,15 +203,10 @@ function showError(msg) {
 function renderDashboard() {
   const sorted = [...csvData].sort((a,b) => b.pct - a.pct);
   const best = sorted[0];
-  const worst = sorted[sorted.length - 1];
-  const avg = (csvData.reduce((s,d) => s + d.pct, 0) / csvData.length).toFixed(2);
+  const worst = sorted[sorted.length-1];
+  const avg = (csvData.reduce((s,d) => s+d.pct, 0) / csvData.length).toFixed(2);
   const months = csvData.map(d => d.month).sort();
-
-  // Header
-  document.getElementById('header-sub').textContent =
-    `${csvData.length} Bulan Berjalan · ${months[0]} — ${months[months.length-1]}`;
-
-  // Cards
+  document.getElementById('header-sub').textContent = `${csvData.length} Bulan Berjalan · ${months[0]} — ${months[months.length-1]}`;
   document.getElementById('avg-pct').textContent = avg + '%';
   document.getElementById('avg-sub').textContent = `Rata-rata ${csvData.length} bulan`;
   document.getElementById('best-month').textContent = best.month;
@@ -250,27 +214,22 @@ function renderDashboard() {
   document.getElementById('worst-month').textContent = worst.month;
   document.getElementById('worst-sub').textContent = worst.pct + '% kepatuhan';
   document.getElementById('table-label').textContent = `DATA ${csvData.length} BULAN · URUT PCT TERTINGGI`;
-
-  // Table
   const tbody = document.getElementById('table-body');
   tbody.innerHTML = '';
   sorted.forEach(row => {
-    const badgeClass = row.pct >= 75 ? 'badge-baik' : row.pct >= 50 ? 'badge-cukup' : 'badge-buruk';
-    const momColor = row.mom && row.mom.startsWith('+') ? '#22c55e' : row.mom === '-' ? '#64748b' : '#f87171';
-    tbody.innerHTML += `
-      <tr>
-        <td class="td-month">${row.month}</td>
-        <td class="td-sesuai">${row.sesuai.toLocaleString()}</td>
-        <td class="td-tidak">${row.tidak.toLocaleString()}</td>
-        <td class="td-total">${row.total.toLocaleString()}</td>
-        <td><span class="badge ${badgeClass}">${row.pct}%</span></td>
-        <td class="td-trend">${row.trend}</td>
-        <td style="color:${momColor}">${row.mom}</td>
-        <td>${row.status}</td>
-      </tr>`;
+    const bc = row.pct >= 75 ? 'badge-baik' : row.pct >= 50 ? 'badge-cukup' : 'badge-buruk';
+    const mc = row.mom && row.mom.startsWith('+') ? '#22c55e' : row.mom === '-' ? '#64748b' : '#f87171';
+    tbody.innerHTML += `<tr>
+      <td class="td-month">${row.month}</td>
+      <td class="td-sesuai">${row.sesuai.toLocaleString()}</td>
+      <td class="td-tidak">${row.tidak.toLocaleString()}</td>
+      <td class="td-total">${row.total.toLocaleString()}</td>
+      <td><span class="badge ${bc}">${row.pct}%</span></td>
+      <td style="font-size:16px">${row.trend}</td>
+      <td style="color:${mc}">${row.mom}</td>
+      <td>${row.status}</td>
+    </tr>`;
   });
-
-  // Show dashboard
   document.getElementById('dashboard').classList.remove('hidden');
   document.getElementById('ai-result').classList.add('hidden');
   document.getElementById('ai-placeholder').classList.remove('hidden');
@@ -278,6 +237,7 @@ function renderDashboard() {
 }
 
 async function generateSummary() {
+  if (!apiKey) { alert('Masukkan Anthropic API Key terlebih dahulu!'); return; }
   const btn = document.getElementById('ai-btn');
   btn.disabled = true;
   btn.textContent = '⏳ GENERATING...';
@@ -294,7 +254,12 @@ async function generateSummary() {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-allow-browser': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -302,12 +267,13 @@ async function generateSummary() {
       })
     });
     const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
     const text = data.content?.map(c => c.text || '').join('') || 'Gagal menghasilkan analisa.';
     document.getElementById('ai-result').textContent = text;
     document.getElementById('ai-result').classList.remove('hidden');
     btn.textContent = '🔄 REGENERATE';
-  } catch {
-    document.getElementById('ai-result').textContent = 'Error: Gagal menghubungi AI.';
+  } catch(e) {
+    document.getElementById('ai-result').textContent = 'Error: ' + e.message;
     document.getElementById('ai-result').classList.remove('hidden');
     btn.textContent = '✨ GENERATE AI SUMMARY';
   } finally {
@@ -318,4 +284,3 @@ async function generateSummary() {
 </script>
 </body>
 </html>
-```
