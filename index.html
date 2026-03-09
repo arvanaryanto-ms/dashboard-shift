@@ -65,6 +65,17 @@ td{padding:9px 14px;white-space:nowrap;}
 .btn-ai{background:#1d4ed8;color:#fff;border:none;border-radius:6px;padding:7px 18px;font-size:10px;cursor:pointer;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;transition:background 0.2s;font-weight:500;}
 .btn-ai:hover{background:#1e40af;}
 .btn-ai:disabled{background:#1a2744;color:#3d5070;cursor:not-allowed;}
+.voice-controls{display:none;align-items:center;gap:8px;margin-top:12px;padding:10px 16px;background:#0a0d18;border-top:1px solid #1a2744;flex-wrap:wrap;}
+.btn-voice{border:none;border-radius:6px;padding:6px 14px;font-size:10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;font-weight:500;transition:all 0.2s;}
+.btn-play{background:#1d4ed8;color:#fff;}
+.btn-play:hover{background:#1e40af;}
+.btn-pause{background:#3A2500;color:#fbbf24;}
+.btn-pause:hover{background:#4a3000;}
+.btn-stop{background:#2A0A0A;color:#f87171;}
+.btn-stop:hover{background:#3a0a0a;}
+.btn-voice:disabled{background:#1a2744;color:#3d5070;cursor:not-allowed;}
+.voice-status{font-size:10px;color:#3d5070;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
+.voice-progress{font-size:10px;color:#4a9eff;font-family:'IBM Plex Mono',monospace;}
 .btn-excel{background:#14532d;color:#22c55e;border:1px solid #22c55e44;border-radius:6px;padding:7px 18px;font-size:10px;cursor:pointer;letter-spacing:1px;font-family:"IBM Plex Mono",monospace;transition:background 0.2s;font-weight:500;display:none;}
 .btn-excel:hover{background:#166534;}
 .ai-block{padding:20px 24px;border-bottom:1px solid #0f1828;}
@@ -139,6 +150,13 @@ td{padding:9px 14px;white-space:nowrap;}
       <div class="ai-placeholder" id="ai-ph">Upload CSV dan klik Generate untuk mendapatkan analisa AI mendalam.</div>
       <div class="ai-loading hidden" id="ai-ld"><div class="spinner"></div>AI sedang menganalisa data planning & realisasi shift...</div>
       <div id="ai-result"></div>
+      <div class="voice-controls" id="voice-controls">
+        <button class="btn-voice btn-play" id="btn-play" onclick="voicePlay()">▶ PLAY</button>
+        <button class="btn-voice btn-pause" id="btn-pause" onclick="voicePause()" disabled>⏸ PAUSE</button>
+        <button class="btn-voice btn-stop" id="btn-stop" onclick="voiceStop()" disabled>⏹ STOP</button>
+        <span class="voice-status" id="voice-status">Siap membaca analisa</span>
+        <span class="voice-progress" id="voice-progress"></span>
+      </div>
     </div>
   </div>
 
@@ -418,6 +436,8 @@ function renderAI(text){
   if(!html) html='<div class="ai-block"><div class="ai-block-title">HASIL ANALISA</div><div class="ai-block-text">'+text+'</div></div>';
   document.getElementById('ai-result').innerHTML=html;
   document.getElementById('btn-excel').style.display='inline';
+  document.getElementById('voice-controls').style.display='flex';
+  voiceStop(); // reset voice state
 }
 
 
@@ -617,35 +637,179 @@ function downloadExcel(){
 
   var fname = 'Performance_Planning_Shift_'+now.getFullYear()+('0'+(now.getMonth()+1)).slice(-2)+('0'+now.getDate()).slice(-2)+'.xlsx';
 
-  try {
-    // Cara 1: XLSX.writeFile langsung (works di browser normal)
-    XLSX.writeFile(wb, fname);
-  } catch(e1) {
-    try {
-      // Cara 2: Blob + anchor (works di beberapa iframe)
-      var wout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-      var blob = new Blob([wout], {type:'application/octet-stream'});
-      var url  = URL.createObjectURL(blob);
-      var a    = document.createElement('a');
-      a.href = url; a.download = fname; a.target = '_blank';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
-    } catch(e2) {
-      // Cara 3: base64 data URI
-      var wout2 = XLSX.write(wb, {bookType:'xlsx', type:'base64'});
-      var a2    = document.createElement('a');
-      a2.href     = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + wout2;
-      a2.download = fname;
-      a2.target   = '_blank';
-      document.body.appendChild(a2);
-      a2.click();
-      setTimeout(function(){ document.body.removeChild(a2); }, 1500);
-    }
-  }
+  // Buka tab baru yang langsung trigger download (works di Metabase iframe)
+  var wbout = XLSX.write(wb, { bookType:'xlsx', type:'base64' });
+  var dlHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Download Excel</title></head><body>'
+    + '<p style="font-family:monospace;color:#333;padding:20px;">Menyiapkan file Excel... download akan dimulai otomatis.</p>'
+    + '<script>'
+    + 'var b64="'+wbout+'";'
+    + 'var bin=atob(b64);'
+    + 'var arr=new Uint8Array(bin.length);'
+    + 'for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);'
+    + 'var blob=new Blob([arr],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});'
+    + 'var url=URL.createObjectURL(blob);'
+    + 'var a=document.createElement("a");'
+    + 'a.href=url;a.download="'+fname+'";'
+    + 'document.body.appendChild(a);a.click();'
+    + 'setTimeout(function(){URL.revokeObjectURL(url);document.body.innerHTML="<p style=\'font-family:monospace;color:green;padding:20px;\'>File berhasil didownload. Tab ini bisa ditutup.</p>";},1500);'
+    + '<\/script></body></html>';
+
+  var blob = new Blob([dlHtml], {type:'text/html'});
+  var url  = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
 
   btn.textContent = 'DOWNLOAD EXCEL';
   btn.disabled = false;
+}
+
+
+// ========== VOICE / TEXT-TO-SPEECH ==========
+var voiceState = { speaking: false, paused: false, blocks: [], current: 0 };
+
+function getAIBlocks(){
+  var blocks = [];
+  var els = document.querySelectorAll('#ai-result .ai-block');
+  els.forEach(function(el){
+    var title = el.querySelector('.ai-block-title');
+    var text  = el.querySelector('.ai-block-text');
+    if(title && text){
+      blocks.push({ title: title.textContent.trim(), text: text.textContent.trim(), el: el });
+    }
+  });
+  return blocks;
+}
+
+function voicePlay(){
+  if(!window.speechSynthesis){ alert('Browser Anda tidak mendukung Text-to-Speech.'); return; }
+
+  // Resume jika pause
+  if(voiceState.paused){
+    window.speechSynthesis.resume();
+    voiceState.paused = false;
+    voiceState.speaking = true;
+    document.getElementById('btn-play').disabled = true;
+    document.getElementById('btn-pause').disabled = false;
+    document.getElementById('voice-status').textContent = 'Membaca...';
+    return;
+  }
+
+  // Mulai dari awal
+  window.speechSynthesis.cancel();
+  voiceState.blocks   = getAIBlocks();
+  voiceState.current  = 0;
+  voiceState.speaking = true;
+  voiceState.paused   = false;
+
+  if(voiceState.blocks.length === 0){
+    alert('Tidak ada hasil analisa untuk dibaca.');
+    return;
+  }
+
+  document.getElementById('btn-play').disabled  = true;
+  document.getElementById('btn-pause').disabled = false;
+  document.getElementById('btn-stop').disabled  = false;
+
+  voiceReadBlock(0);
+}
+
+function voiceReadBlock(idx){
+  if(idx >= voiceState.blocks.length){
+    voiceFinish();
+    return;
+  }
+
+  var block = voiceState.blocks[idx];
+  voiceState.current = idx;
+
+  // highlight blok aktif
+  document.querySelectorAll('#ai-result .ai-block').forEach(function(el){
+    el.style.borderLeft = 'none';
+  });
+  block.el.style.borderLeft = '3px solid #4a9eff';
+  block.el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+  document.getElementById('voice-status').textContent = 'Membaca blok '+(idx+1)+' dari '+voiceState.blocks.length;
+  document.getElementById('voice-progress').textContent = block.title;
+
+  var fullText = block.title + '. ' + block.text;
+
+  var utter = new SpeechSynthesisUtterance(fullText);
+  utter.lang  = 'id-ID';
+  utter.rate  = 0.95;
+  utter.pitch = 1;
+  utter.volume= 1;
+
+  // Pilih suara Indonesia jika tersedia
+  var voices = window.speechSynthesis.getVoices();
+  var idVoice = voices.find(function(v){ return v.lang === 'id-ID'; });
+  if(idVoice) utter.voice = idVoice;
+
+  utter.onend = function(){
+    if(voiceState.speaking && !voiceState.paused){
+      voiceReadBlock(idx + 1);
+    }
+  };
+  utter.onerror = function(e){
+    if(e.error !== 'interrupted') voiceFinish();
+  };
+
+  window.speechSynthesis.speak(utter);
+}
+
+function voicePause(){
+  if(window.speechSynthesis.speaking && !voiceState.paused){
+    window.speechSynthesis.pause();
+    voiceState.paused   = true;
+    voiceState.speaking = false;
+    document.getElementById('btn-play').disabled  = false;
+    document.getElementById('btn-play').textContent = '▶ LANJUT';
+    document.getElementById('btn-pause').disabled = true;
+    document.getElementById('voice-status').textContent = 'Dijeda';
+  }
+}
+
+function voiceStop(){
+  window.speechSynthesis.cancel();
+  voiceState.speaking = false;
+  voiceState.paused   = false;
+  voiceState.current  = 0;
+  document.querySelectorAll('#ai-result .ai-block').forEach(function(el){
+    el.style.borderLeft = 'none';
+  });
+  var btnPlay = document.getElementById('btn-play');
+  var btnPause= document.getElementById('btn-pause');
+  var btnStop = document.getElementById('btn-stop');
+  if(btnPlay)  { btnPlay.disabled = false; btnPlay.textContent = '▶ PLAY'; }
+  if(btnPause) { btnPause.disabled = true; }
+  if(btnStop)  { btnStop.disabled = true; }
+  var vs = document.getElementById('voice-status');
+  var vp = document.getElementById('voice-progress');
+  if(vs) vs.textContent = 'Siap membaca analisa';
+  if(vp) vp.textContent = '';
+}
+
+function voiceFinish(){
+  voiceState.speaking = false;
+  voiceState.paused   = false;
+  document.querySelectorAll('#ai-result .ai-block').forEach(function(el){
+    el.style.borderLeft = 'none';
+  });
+  var btnPlay = document.getElementById('btn-play');
+  var btnPause= document.getElementById('btn-pause');
+  var btnStop = document.getElementById('btn-stop');
+  if(btnPlay)  { btnPlay.disabled = false; btnPlay.textContent = '▶ PLAY'; }
+  if(btnPause) { btnPause.disabled = true; }
+  if(btnStop)  { btnStop.disabled = true; }
+  var vs = document.getElementById('voice-status');
+  var vp = document.getElementById('voice-progress');
+  if(vs) vs.textContent = 'Selesai dibaca';
+  if(vp) vp.textContent = '';
+}
+
+// Load voices async (Chrome perlu ini)
+if(window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged = function(){ window.speechSynthesis.getVoices(); };
 }
 
 window.onload=function(){
