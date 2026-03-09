@@ -616,7 +616,30 @@ function downloadExcel(){
   XLSX.utils.book_append_sheet(wb, ws, 'Laporan');
 
   var fname = 'Performance_Planning_Shift_'+now.getFullYear()+('0'+(now.getMonth()+1)).slice(-2)+('0'+now.getDate()).slice(-2)+'.xlsx';
-  XLSX.writeFile(wb, fname);
+  // Blob download agar bisa dari iframe Metabase
+  try {
+    var wbout = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+    var blob = new Blob([wbout], { type:'application/octet-stream' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = fname;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  } catch(e) {
+    var wbout2 = XLSX.write(wb, { bookType:'xlsx', type:'base64' });
+    var a2 = document.createElement('a');
+    a2.href = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'+wbout2;
+    a2.download = fname;
+    a2.target = '_blank';
+    a2.rel = 'noopener';
+    document.body.appendChild(a2);
+    a2.click();
+    setTimeout(function(){ document.body.removeChild(a2); }, 1000);
+  }
 
   btn.textContent = 'DOWNLOAD EXCEL';
   btn.disabled = false;
