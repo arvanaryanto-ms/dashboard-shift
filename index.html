@@ -538,7 +538,7 @@ function downloadExcel(){
   // data rows
   RAW.forEach(function(r){
     var pct = r.pct;
-    var statusClean = r.status.replace(/[^ -]/g,'').trim();
+    var statusClean = (r.status||'').split('').filter(function(c){return c.charCodeAt(0)<128;}).join('').trim();
     var trendClean  = r.trend==='⬆️'?'Naik':r.trend==='⬇️'?'Turun':'Tetap';
     var momClean    = r.mom||'-';
     var rowBg = pct>=75?'091A0F':pct>=50?'1A1200':'1A0808';
