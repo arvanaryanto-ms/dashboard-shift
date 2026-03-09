@@ -6,6 +6,7 @@
 <title>Performance Planning & Realisasi Shift</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
@@ -437,7 +438,8 @@ function renderAI(text){
   document.getElementById('ai-result').innerHTML=html;
   document.getElementById('btn-excel').style.display='inline';
   document.getElementById('voice-controls').style.display='flex';
-  voiceStop(); // reset voice state
+  if(typeof responsiveVoice !== 'undefined') responsiveVoice.cancel();
+  voiceStop();
 }
 
 
@@ -664,47 +666,42 @@ function downloadExcel(){
 }
 
 
-// ========== VOICE / TEXT-TO-SPEECH ==========
-var voiceState = { speaking: false, paused: false, blocks: [], current: 0 };
+// ========== VOICE / TEXT-TO-SPEECH (ResponsiveVoice) ==========
+var voiceState = { speaking: false, blocks: [], current: 0 };
 
 function getAIBlocks(){
   var blocks = [];
-  var els = document.querySelectorAll('#ai-result .ai-block');
-  els.forEach(function(el){
+  document.querySelectorAll('#ai-result .ai-block').forEach(function(el){
     var title = el.querySelector('.ai-block-title');
     var text  = el.querySelector('.ai-block-text');
-    if(title && text){
-      blocks.push({ title: title.textContent.trim(), text: text.textContent.trim(), el: el });
-    }
+    if(title && text) blocks.push({ title: title.textContent.trim(), text: text.textContent.trim(), el: el });
   });
   return blocks;
 }
 
 function voicePlay(){
-  if(!window.speechSynthesis){ alert('Browser Anda tidak mendukung Text-to-Speech.'); return; }
+  if(typeof responsiveVoice === 'undefined'){
+    alert('Voice tidak tersedia. Pastikan koneksi internet aktif.');
+    return;
+  }
 
-  // Resume jika pause
-  if(voiceState.paused){
-    window.speechSynthesis.resume();
-    voiceState.paused = false;
+  // Lanjut dari posisi pause
+  if(!voiceState.speaking && voiceState.current > 0 && voiceState.blocks.length > 0){
     voiceState.speaking = true;
-    document.getElementById('btn-play').disabled = true;
+    document.getElementById('btn-play').disabled  = true;
     document.getElementById('btn-pause').disabled = false;
-    document.getElementById('voice-status').textContent = 'Membaca...';
+    document.getElementById('btn-stop').disabled  = false;
+    document.getElementById('voice-status').textContent = 'Melanjutkan...';
+    voiceReadBlock(voiceState.current);
     return;
   }
 
-  // Mulai dari awal
-  window.speechSynthesis.cancel();
-  voiceState.blocks   = getAIBlocks();
-  voiceState.current  = 0;
-  voiceState.speaking = true;
-  voiceState.paused   = false;
+  responsiveVoice.cancel();
+  voiceState.blocks  = getAIBlocks();
+  voiceState.current = 0;
+  voiceState.speaking= true;
 
-  if(voiceState.blocks.length === 0){
-    alert('Tidak ada hasil analisa untuk dibaca.');
-    return;
-  }
+  if(voiceState.blocks.length === 0){ alert('Tidak ada hasil analisa untuk dibaca.'); return; }
 
   document.getElementById('btn-play').disabled  = true;
   document.getElementById('btn-pause').disabled = false;
@@ -714,10 +711,8 @@ function voicePlay(){
 }
 
 function voiceReadBlock(idx){
-  if(idx >= voiceState.blocks.length){
-    voiceFinish();
-    return;
-  }
+  if(idx >= voiceState.blocks.length){ voiceFinish(); return; }
+  if(!voiceState.speaking){ return; }
 
   var block = voiceState.blocks[idx];
   voiceState.current = idx;
@@ -734,33 +729,23 @@ function voiceReadBlock(idx){
 
   var fullText = block.title + '. ' + block.text;
 
-  var utter = new SpeechSynthesisUtterance(fullText);
-  utter.lang  = 'id-ID';
-  utter.rate  = 0.95;
-  utter.pitch = 1;
-  utter.volume= 1;
-
-  // Pilih suara Indonesia jika tersedia
-  var voices = window.speechSynthesis.getVoices();
-  var idVoice = voices.find(function(v){ return v.lang === 'id-ID'; });
-  if(idVoice) utter.voice = idVoice;
-
-  utter.onend = function(){
-    if(voiceState.speaking && !voiceState.paused){
-      voiceReadBlock(idx + 1);
+  responsiveVoice.speak(fullText, 'Indonesian Female', {
+    rate: 0.9,
+    pitch: 1,
+    volume: 1,
+    onend: function(){
+      if(voiceState.speaking) voiceReadBlock(idx + 1);
+    },
+    onerror: function(){
+      voiceFinish();
     }
-  };
-  utter.onerror = function(e){
-    if(e.error !== 'interrupted') voiceFinish();
-  };
-
-  window.speechSynthesis.speak(utter);
+  });
 }
 
 function voicePause(){
-  if(window.speechSynthesis.speaking && !voiceState.paused){
-    window.speechSynthesis.pause();
-    voiceState.paused   = true;
+  if(typeof responsiveVoice === 'undefined') return;
+  if(voiceState.speaking){
+    responsiveVoice.pause();
     voiceState.speaking = false;
     document.getElementById('btn-play').disabled  = false;
     document.getElementById('btn-play').textContent = '▶ LANJUT';
@@ -770,16 +755,15 @@ function voicePause(){
 }
 
 function voiceStop(){
-  window.speechSynthesis.cancel();
+  if(typeof responsiveVoice !== 'undefined') responsiveVoice.cancel();
   voiceState.speaking = false;
-  voiceState.paused   = false;
   voiceState.current  = 0;
   document.querySelectorAll('#ai-result .ai-block').forEach(function(el){
     el.style.borderLeft = 'none';
   });
-  var btnPlay = document.getElementById('btn-play');
-  var btnPause= document.getElementById('btn-pause');
-  var btnStop = document.getElementById('btn-stop');
+  var btnPlay  = document.getElementById('btn-play');
+  var btnPause = document.getElementById('btn-pause');
+  var btnStop  = document.getElementById('btn-stop');
   if(btnPlay)  { btnPlay.disabled = false; btnPlay.textContent = '▶ PLAY'; }
   if(btnPause) { btnPause.disabled = true; }
   if(btnStop)  { btnStop.disabled = true; }
@@ -791,13 +775,12 @@ function voiceStop(){
 
 function voiceFinish(){
   voiceState.speaking = false;
-  voiceState.paused   = false;
   document.querySelectorAll('#ai-result .ai-block').forEach(function(el){
     el.style.borderLeft = 'none';
   });
-  var btnPlay = document.getElementById('btn-play');
-  var btnPause= document.getElementById('btn-pause');
-  var btnStop = document.getElementById('btn-stop');
+  var btnPlay  = document.getElementById('btn-play');
+  var btnPause = document.getElementById('btn-pause');
+  var btnStop  = document.getElementById('btn-stop');
   if(btnPlay)  { btnPlay.disabled = false; btnPlay.textContent = '▶ PLAY'; }
   if(btnPause) { btnPause.disabled = true; }
   if(btnStop)  { btnStop.disabled = true; }
@@ -805,11 +788,6 @@ function voiceFinish(){
   var vp = document.getElementById('voice-progress');
   if(vs) vs.textContent = 'Selesai dibaca';
   if(vp) vp.textContent = '';
-}
-
-// Load voices async (Chrome perlu ini)
-if(window.speechSynthesis){
-  window.speechSynthesis.onvoiceschanged = function(){ window.speechSynthesis.getVoices(); };
 }
 
 window.onload=function(){
