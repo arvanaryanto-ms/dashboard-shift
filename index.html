@@ -99,7 +99,7 @@ td{padding:9px 14px;white-space:nowrap;}
 
   <div class="section-title">UPLOAD DATA</div>
   <div class="upload-zone" id="uz" onclick="triggerFile()" ondragover="onDrag(event)" ondragleave="offDrag()" ondrop="onDrop(event)">
-    <input type="file" id="fi" accept=".csv" style="display:none" onchange="readCSV(this)"/>
+    <input type="file" id="fi" accept=".csv" style="display:none" onchange="readCSV(this)" onclick="this.value=null"/>
     <button class="btn-dl" onclick="event.stopPropagation();dlTemplate()">↓ DOWNLOAD TEMPLATE</button>
     <div class="upload-icon">📊</div>
     <div class="upload-label" id="uz-title">Upload CSV — Performance Planning & Realisasi Shift</div>
@@ -154,14 +154,15 @@ function saveKey(){
 }
 function getKey(){ return document.getElementById('api-key').value.trim()||sessionStorage.getItem('or_key')||''; }
 
-function triggerFile(){ document.getElementById('fi').click(); }
-function onDrag(e){ e.preventDefault(); document.getElementById('uz').classList.add('drag'); }
+function triggerFile(){ setTimeout(function(){ document.getElementById('fi').click(); }, 0); }
+function onDrag(e){ e.preventDefault(); e.stopPropagation(); document.getElementById('uz').classList.add('drag'); return false; }
 function offDrag(){ document.getElementById('uz').classList.remove('drag'); }
-function onDrop(e){ e.preventDefault(); offDrag(); var f=e.dataTransfer.files[0]; if(f) parseFile(f); }
+function onDrop(e){ e.preventDefault(); e.stopPropagation(); offDrag(); var f=e.dataTransfer.files[0]; if(f) parseFile(f); return false; }
 function readCSV(inp){ if(inp.files[0]) parseFile(inp.files[0]); }
 
 function parseFile(file){
   Papa.parse(file,{
+    encoding:'UTF-8',
     header:true, skipEmptyLines:true,
     complete:function(res){
       if(!res.data||res.data.length===0){ showErr('File CSV kosong.'); return; }
@@ -539,7 +540,7 @@ function downloadExcel(){
   RAW.forEach(function(r){
     var pct = r.pct;
     var statusClean = (r.status||'').split('').filter(function(c){return c.charCodeAt(0)<128;}).join('').trim();
-    var trendClean  = r.trend==='⬆️'?'Naik':r.trend==='⬇️'?'Turun':'Tetap';
+    var trendClean = r.trend.indexOf('⬆')>=0?'Naik':r.trend.indexOf('⬇')>=0?'Turun':'Tetap';
     var momClean    = r.mom||'-';
     var rowBg = pct>=75?'091A0F':pct>=50?'1A1200':'1A0808';
     var pctColor = pct>=75?'22C55E':pct>=50?'FBBF24':'F87171';
